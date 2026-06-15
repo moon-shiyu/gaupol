@@ -256,7 +256,8 @@ class OpenAgent(aeidon.Delegate):
                 self._check_sort_count(path, n)
                 return page
         # Report if all codecs failed to decode file.
-        self._show_encoding_error_dialog(basename)
+        candidates = aeidon.encodings.get_last_candidates()
+        self._show_encoding_error_dialog(basename, candidates)
         raise gaupol.Default
 
     @aeidon.deco.export
@@ -320,10 +321,17 @@ class OpenAgent(aeidon.Delegate):
         gaupol.util.iterate_main()
         return paths, encoding
 
-    def _show_encoding_error_dialog(self, basename):
+    def _show_encoding_error_dialog(self, basename, candidates=None):
         """Show an error dialog after failing to decode file."""
         title = _('Failed to decode file "{}" with all attempted codecs').format(basename)
         message = _("Please try to open the file with a different character encoding.")
+        if candidates:
+            names = ", ".join(
+                aeidon.encodings.code_to_long_name(c["encoding"])
+                for c in candidates[:5]
+                if aeidon.encodings.is_valid_code(c["encoding"]))
+            if names:
+                message += "\n\n" + _("Auto-detection candidates: {}").format(names)
         dialog = gaupol.ErrorDialog(self.window, title, message)
         dialog.add_button(_("_OK"), Gtk.ResponseType.OK)
         dialog.set_default_response(Gtk.ResponseType.OK)
@@ -396,6 +404,8 @@ class OpenAgent(aeidon.Delegate):
         """Try to open file at `path` and return subtitle sort count."""
         if encoding == "auto":
             encoding = aeidon.encodings.detect(path)
+            page.project.encoding_candidates = \
+                aeidon.encodings.get_last_candidates()
             if encoding is None: raise UnicodeError
         kwargs["align_method"] = gaupol.conf.file.align_method
         basename = os.path.basename(path)

@@ -17,6 +17,8 @@
 
 import aeidon
 import codecs
+import os
+import tempfile
 
 from aeidon.i18n   import _
 from unittest.mock import patch
@@ -154,6 +156,61 @@ class TestModule(aeidon.TestCase):
     def test_detect(self):
         name = aeidon.encodings.detect(self.new_subrip_file())
         assert aeidon.encodings.is_valid_code(name)
+
+    def test_detect_with_candidates__basic(self):
+        candidates = aeidon.encodings.detect_with_candidates(
+            self.new_subrip_file())
+        assert isinstance(candidates, list)
+        assert len(candidates) >= 1
+        for item in candidates:
+            assert "encoding" in item
+            assert "chaos" in item
+            assert "coherence" in item
+            assert aeidon.encodings.is_valid_code(item["encoding"])
+
+    @patch("aeidon.encodings.is_valid_code", lambda x: True)
+    def test_detect_with_candidates__bom(self):
+        path = self.new_subrip_file()
+        with open(path, "rb") as f:
+            blob = f.read()
+        with open(path, "wb") as f:
+            f.write(codecs.BOM_UTF8 + blob)
+        candidates = aeidon.encodings.detect_with_candidates(path)
+        assert len(candidates) == 1
+        assert candidates[0]["encoding"] == "utf_8_sig"
+        assert candidates[0]["chaos"] == 0.0
+        assert candidates[0]["coherence"] == 100.0
+
+    def test_detect_with_candidates__sorted(self):
+        candidates = aeidon.encodings.detect_with_candidates(
+            self.new_subrip_file())
+        if len(candidates) >= 2:
+            for i in range(len(candidates) - 1):
+                a, b = candidates[i], candidates[i + 1]
+                assert (a["chaos"], -a["coherence"]) <= (b["chaos"], -b["coherence"])
+
+    def test_detect_with_candidates__none(self):
+        # Create an empty file; charset_normalizer should return no candidates.
+        fd, path = tempfile.mkstemp(suffix=".srt")
+        try:
+            candidates = aeidon.encodings.detect_with_candidates(path)
+            assert isinstance(candidates, list)
+        finally:
+            os.close(fd)
+            os.unlink(path)
+
+    def test_get_last_candidates(self):
+        # Before any detection, should return empty list.
+        aeidon.encodings._last_candidates = []
+        assert aeidon.encodings.get_last_candidates() == []
+        # After detection, should reflect the result.
+        aeidon.encodings.detect(self.new_subrip_file())
+        candidates = aeidon.encodings.get_last_candidates()
+        assert isinstance(candidates, list)
+        assert len(candidates) >= 1
+        # Returned list should be a copy, not the internal list.
+        candidates.append({"encoding": "fake", "chaos": 0, "coherence": 0})
+        assert len(aeidon.encodings.get_last_candidates()) < len(candidates)
 
     def test_detect_bom__none(self):
         path = self.new_subrip_file()

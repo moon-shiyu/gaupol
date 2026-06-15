@@ -140,6 +140,9 @@ CODE, NAME, DESC = range(3)
 # Illegal characters in encoding codes.
 _re_illegal = re.compile(r"[^a-z0-9_]")
 
+# Cached encoding candidates from the last detection call.
+_last_candidates = []
+
 
 def code_to_description(code):
     """Convert encoding `code` to localized description."""
@@ -174,15 +177,55 @@ def detect(path):
 
     Raise :exc:`IOError` if reading fails.
     """
+    candidates = detect_with_candidates(path)
+    if not candidates:
+        return None
+    return candidates[0]["encoding"]
+
+def detect_with_candidates(path):
+    """
+    Detect encoding candidates for file at `path`.
+
+    Return a list of dicts, each with keys ``encoding`` (str),
+    ``chaos`` (float, 0--100, lower is better) and ``coherence``
+    (float, 0--100, higher is better), sorted best-first.
+    Return an empty list if no encoding could be detected.
+
+    The result is also cached and can be retrieved later via
+    :func:`get_last_candidates`.
+
+    Raise :exc:`IOError` if reading fails.
+    """
+    global _last_candidates
     bom_encoding = detect_bom(path)
     if bom_encoding is not None:
-        return bom_encoding
+        candidates = [{"encoding": bom_encoding,
+                        "chaos": 0.0,
+                        "coherence": 100.0}]
+        _last_candidates = candidates
+        return list(candidates)
     from charset_normalizer import from_path
     detector = from_path(path)
-    result = detector.best()
-    if result is None:
-        return None
-    return result.encoding
+    candidates = []
+    for result in detector:
+        candidates.append({
+            "encoding": result.encoding,
+            "chaos": result.percent_chaos,
+            "coherence": result.percent_coherence,
+        })
+    candidates.sort(key=lambda x: (x["chaos"], -x["coherence"]))
+    _last_candidates = candidates
+    return list(candidates)
+
+def get_last_candidates():
+    """
+    Return a copy of the candidates from the last detection call.
+
+    This allows callers to access confidence information after
+    :func:`detect` has been called, without re-running detection.
+    Returns an empty list if no detection has been performed yet.
+    """
+    return list(_last_candidates)
 
 def detect_bom(path):
     """Return corresponding encoding if BOM found, else ``None``."""
