@@ -230,23 +230,28 @@ class SearchAgent(aeidon.Delegate):
     @aeidon.deco.revertable
     def replace_all(self, register=-1):
         """
-        Replace all matches of pattern and return amount of replacements made.
+        Replace all matches of pattern.
 
         Raise :exc:`re.error` if bad replacement.
+        Return a :class:`aeidon.ReplaceAllStats` with match count,
+        replacement count, and the set of affected subtitle row indices.
         """
-        counts = {}
+        stats = aeidon.ReplaceAllStats()
+        doc_has_changes = {}
         for doc in self._docs:
-            counts[doc] = 0
             new_indices = []
             new_texts = []
             for index, subtitle in enumerate(self.subtitles):
                 text = subtitle.get_text(doc)
                 self._finder.set_text(text)
-                sub_count = self._finder.replace_all()
-                if sub_count > 0:
+                sub_stats = self._finder.replace_all()
+                stats.matches += sub_stats.matches
+                stats.replacements += sub_stats.replacements
+                if sub_stats.replacements > 0:
                     new_indices.append(index)
                     new_texts.append(self._finder.text)
-                    counts[doc] += sub_count
+                    stats.rows.add(index)
+            doc_has_changes[doc] = bool(new_indices)
             if not new_indices: continue
             self.replace_texts(new_indices,
                                doc,
@@ -254,9 +259,9 @@ class SearchAgent(aeidon.Delegate):
                                register=register)
 
             self.set_action_description(register, _("Replacing all"))
-        if len(list(counts.keys())) == 2 and all(counts.values()):
+        if len(list(doc_has_changes.keys())) == 2 and all(doc_has_changes.values()):
             self.group_actions(register, 2, _("Replacing all"))
-        return sum(counts.values())
+        return stats
 
     @aeidon.deco.export
     def set_search_regex(self, pattern, flags=re.DOTALL|re.MULTILINE):

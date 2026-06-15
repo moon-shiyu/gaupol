@@ -456,21 +456,43 @@ class SearchDialog(gaupol.BuilderDialog):
     @aeidon.deco.silent(gaupol.Default)
     def replace_all(self):
         """Replace all matches of pattern."""
-        count = 0
+        stats = aeidon.ReplaceAllStats()
         target = gaupol.conf.search.target
         for page in self.application.get_target_pages(target):
             self._set_pattern(page)
             self._set_replacement(page)
             try:
-                count += page.project.replace_all()
+                stats += page.project.replace_all()
             except re.error as error:
                 self._show_regex_error_dialog_replacement(str(error))
                 break
         self._reset_properties()
-        self._statuslabel.flash_text(n_(
-            "Found and replaced {:d} occurence",
-            "Found and replaced {:d} occurences",
-            count).format(count))
+        self._statuslabel.flash_text(
+            self._format_replace_all_message(stats))
+
+    def _format_replace_all_message(self, stats):
+        """Format a status message from replace-all statistics."""
+        if stats.matches == 0:
+            return _("No matches found")
+        row_range = stats.row_range
+        if row_range is None:
+            # All matches were identical to the replacement text.
+            return n_(
+                "Found {:d} match, no changes needed",
+                "Found {:d} matches, no changes needed",
+                stats.matches).format(stats.matches)
+        first, last = row_range
+        # Use 1-based line numbers for display.
+        if first == last:
+            line_info = _("in line {:d}").format(first + 1)
+        else:
+            line_info = _("in lines {:d}\u2013{:d}").format(
+                first + 1, last + 1)
+        return n_(
+            "Found {:d} match, replaced {:d}, {info}",
+            "Found {:d} matches, replaced {:d}, {info}",
+            stats.matches).format(
+                stats.matches, stats.replacements, info=line_info)
 
     def _reset_properties(self):
         """Reset search properties to defaults."""

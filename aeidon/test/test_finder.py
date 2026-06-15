@@ -18,6 +18,77 @@
 import aeidon
 
 
+class TestReplaceAllStats(aeidon.TestCase):
+
+    def test___init___defaults(self):
+        stats = aeidon.ReplaceAllStats()
+        assert stats.matches == 0
+        assert stats.replacements == 0
+        assert stats.rows == set()
+
+    def test___init___values(self):
+        stats = aeidon.ReplaceAllStats(
+            matches=5, replacements=3, rows={0, 2, 4})
+        assert stats.matches == 5
+        assert stats.replacements == 3
+        assert stats.rows == {0, 2, 4}
+
+    def test___int__(self):
+        stats = aeidon.ReplaceAllStats(matches=5, replacements=3)
+        assert int(stats) == 3
+
+    def test___bool___true(self):
+        stats = aeidon.ReplaceAllStats(replacements=1)
+        assert bool(stats) is True
+
+    def test___bool___false(self):
+        stats = aeidon.ReplaceAllStats(replacements=0)
+        assert bool(stats) is False
+
+    def test___eq___int(self):
+        stats = aeidon.ReplaceAllStats(replacements=7)
+        assert stats == 7
+        assert not (stats == 6)
+
+    def test___eq___stats(self):
+        a = aeidon.ReplaceAllStats(matches=3, replacements=2, rows={1})
+        b = aeidon.ReplaceAllStats(matches=3, replacements=2, rows={1})
+        assert a == b
+
+    def test___eq___stats_differ(self):
+        a = aeidon.ReplaceAllStats(matches=3, replacements=2, rows={1})
+        b = aeidon.ReplaceAllStats(matches=3, replacements=1, rows={1})
+        assert not (a == b)
+
+    def test___iadd__(self):
+        a = aeidon.ReplaceAllStats(matches=2, replacements=1, rows={0})
+        b = aeidon.ReplaceAllStats(matches=3, replacements=2, rows={1, 2})
+        a += b
+        assert a.matches == 5
+        assert a.replacements == 3
+        assert a.rows == {0, 1, 2}
+
+    def test___repr__(self):
+        stats = aeidon.ReplaceAllStats(
+            matches=4, replacements=3, rows={0, 5})
+        text = repr(stats)
+        assert "matches=4" in text
+        assert "replacements=3" in text
+        assert "rows=2" in text
+
+    def test_row_range__empty(self):
+        stats = aeidon.ReplaceAllStats()
+        assert stats.row_range is None
+
+    def test_row_range__single(self):
+        stats = aeidon.ReplaceAllStats(rows={3})
+        assert stats.row_range == (3, 3)
+
+    def test_row_range__multiple(self):
+        stats = aeidon.ReplaceAllStats(rows={1, 5, 10})
+        assert stats.row_range == (1, 10)
+
+
 class TestFinder(aeidon.TestCase):
 
     ####### 00000000001111111111222222 222233333333334444444444555555
@@ -188,8 +259,11 @@ class TestFinder(aeidon.TestCase):
     def test_replace_all__regex(self):
         self.finder.set_regex(r"\s")
         self.finder.replacement = ""
-        count = self.finder.replace_all()
-        assert count == 9
+        stats = self.finder.replace_all()
+        assert stats.matches == 9
+        assert stats.replacements == 9
+        assert stats.rows == set()
+        assert stats == 9
         assert self.finder.text == (
             "Oneonlyrisksit,because"
             "one'ssurvivaldependsonit.")
@@ -197,8 +271,20 @@ class TestFinder(aeidon.TestCase):
     def test_replace_all__string(self):
         self.finder.pattern = "i"
         self.finder.replacement = "-"
-        count = self.finder.replace_all()
-        assert count == 4
+        stats = self.finder.replace_all()
+        assert stats.matches == 4
+        assert stats.replacements == 4
+        assert stats.rows == set()
+        assert stats == 4
         assert self.finder.text == (
             "One only r-sks -t, because\n"
             "one's surv-val depends on -t.")
+
+    def test_replace_all__no_actual_change(self):
+        self.finder.pattern = "it"
+        self.finder.replacement = "it"
+        stats = self.finder.replace_all()
+        assert stats.matches == 2
+        assert stats.replacements == 0
+        assert stats == 0
+        assert not stats

@@ -19,7 +19,58 @@
 
 import re
 
-__all__ = ("Finder",)
+__all__ = ("Finder", "ReplaceAllStats")
+
+
+class ReplaceAllStats:
+
+    """
+    Statistics returned by :meth:`Finder.replace_all`.
+
+    :ivar matches: Total number of pattern matches found
+    :ivar replacements: Number of matches where the text actually changed
+    """
+
+    __slots__ = ("matches", "replacements", "rows")
+
+    def __init__(self, matches=0, replacements=0, rows=None):
+        self.matches = matches
+        self.replacements = replacements
+        self.rows = rows or set()
+
+    def __int__(self):
+        return self.replacements
+
+    def __bool__(self):
+        return self.replacements > 0
+
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return self.replacements == other
+        if isinstance(other, ReplaceAllStats):
+            return (self.matches == other.matches
+                    and self.replacements == other.replacements
+                    and self.rows == other.rows)
+        return NotImplemented
+
+    def __iadd__(self, other):
+        if isinstance(other, ReplaceAllStats):
+            self.matches += other.matches
+            self.replacements += other.replacements
+            self.rows = self.rows | other.rows
+            return self
+        return NotImplemented
+
+    def __repr__(self):
+        return ("ReplaceAllStats(matches={}, replacements={}, rows={})"
+                .format(self.matches, self.replacements, len(self.rows)))
+
+    @property
+    def row_range(self):
+        """Return (min_row, max_row) tuple or None if no rows affected."""
+        if not self.rows:
+            return None
+        return (min(self.rows), max(self.rows))
 
 
 class Finder:
@@ -152,12 +203,12 @@ class Finder:
         Replace all occurences of pattern.
 
         Raise :exc:`re.error` if bad replacement.
-        Return the amount of substitutions made.
+        Return a :class:`ReplaceAllStats` with match and replacement counts.
         """
         self.pos = 0
         self.match = None
         self.match_span = None
-        count = 0
+        stats = ReplaceAllStats()
         while True:
             try:
                 self.next()
@@ -165,9 +216,17 @@ class Finder:
                 self.pos = len(self.text)
                 self.match_span = None
                 break
+            a, z = self.match_span
+            matched_text = self.text[a:z]
             self.replace()
-            count += 1
-        return count
+            stats.matches += 1
+            # Count as an actual replacement only if text changed.
+            replacement = self.replacement
+            if not isinstance(self.pattern, str) and self.match is not None:
+                replacement = self.match.expand(self.replacement)
+            if matched_text != replacement:
+                stats.replacements += 1
+        return stats
 
     def set_regex(self, pattern, flags=re.DOTALL|re.MULTILINE):
         """

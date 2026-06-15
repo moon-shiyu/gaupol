@@ -91,7 +91,7 @@ class TestSearchAgent(aeidon.TestCase):
         self.project.set_search_target(None, (MAIN, TRAN))
         self.project.set_search_regex(r"$")
         self.project.set_search_replacement("--")
-        self.project.replace_all()
+        stats = self.project.replace_all()
         texts = ("God has promised you that--\nyou will go to Heaven?--",
                  "So you are certain of--\nbeing saved?--",
                  "Be careful,--\nit's a dangerous answer.--")
@@ -99,3 +99,10 @@ class TestSearchAgent(aeidon.TestCase):
         for i, text in enumerate(texts):
             assert self.project.subtitles[i].main_text == text
             assert self.project.subtitles[i].tran_text == text
+        # Each subtitle has 2 lines → 2 matches of $ per text.
+        # 3 subtitles × 2 docs = 12 total matches, all with actual changes.
+        assert isinstance(stats, aeidon.ReplaceAllStats)
+        assert stats.matches == 12
+        assert stats.replacements == 12
+        assert stats.rows == {0, 1, 2}
+        assert stats.row_range == (0, 2)
