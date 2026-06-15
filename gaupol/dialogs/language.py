@@ -65,13 +65,13 @@ class LanguageDialog(gaupol.BuilderDialog):
         selection = self._tree_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
         selection.connect("changed", self._on_tree_view_selection_changed)
-        store = Gtk.ListStore(str, str)
+        store = Gtk.ListStore(str, str, bool)
         self._populate_store(store)
-        store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
         self._tree_view.set_model(store)
+        self._tree_view.set_row_separator_func(
+            lambda store, itr, data=None: store.get_value(itr, 2), None)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("", renderer, text=1)
-        column.set_sort_column_id(1)
         self._tree_view.append_column(column)
 
     def _init_values(self):
@@ -82,6 +82,7 @@ class LanguageDialog(gaupol.BuilderDialog):
         store = self._tree_view.get_model()
         selection = self._tree_view.get_selection()
         for i in range(len(store)):
+            if store[i][2]: continue  # Skip separator rows.
             if store[i][0] == language:
                 selection.select_path(i)
         self._main_radio.set_active(field == gaupol.fields.MAIN_TEXT)
@@ -111,18 +112,49 @@ class LanguageDialog(gaupol.BuilderDialog):
             else gaupol.fields.TRAN_TEXT)
 
     def _on_tree_view_selection_changed(self, selection):
-        """Save the selected language."""
+        """Save the selected language and track recent usage."""
         store, itr = selection.get_selected()
         if itr is None: return
         value = store.get_value(itr, 0)
+        if store.get_value(itr, 2): return  # Skip separator rows.
         gaupol.conf.spell_check.language = value
+        self._add_recent_language(value)
+
+    def _add_recent_language(self, code):
+        """Add `code` to the front of the recent languages list."""
+        recent = list(gaupol.conf.spell_check.recent_languages)
+        if code in recent:
+            recent.remove(code)
+        recent.insert(0, code)
+        gaupol.conf.spell_check.recent_languages = recent[:5]
 
     def _populate_store(self, store):
-        """Add all available languages to `store`."""
+        """Add all available languages to `store` with priority ordering."""
         locales = []
         with aeidon.util.silent(Exception):
             locales = aeidon.SpellChecker.list_languages()
+        # Build code-to-name mapping.
+        names = {}
         for locale in locales:
             with aeidon.util.silent(Exception):
-                name = aeidon.locales.code_to_name(locale)
-                store.append((locale, name))
+                names[locale] = aeidon.locales.code_to_name(locale)
+        # Use priority sorting.
+        system_code = aeidon.locales.get_system_code()
+        project_code = gaupol.conf.spell_check.language
+        recent_codes = list(gaupol.conf.spell_check.recent_languages)
+        priority, other = aeidon.languages.sort_languages(
+            locales,
+            system_code=system_code,
+            project_code=project_code,
+            recent_codes=recent_codes)
+        # Add priority languages first.
+        for code in priority:
+            if code in names:
+                store.append((code, names[code], False))
+        # Add separator if there are both priority and other languages.
+        if priority and other:
+            store.append(("", "", True))
+        # Add remaining languages.
+        for code in other:
+            if code in names:
+                store.append((code, names[code], False))

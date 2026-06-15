@@ -59,3 +59,61 @@ def is_valid(code):
     if not _languages:
         _init_languages()
     return code in _languages
+
+def sort_languages(codes, system_code=None, project_code=None, recent_codes=None):
+    """
+    Sort language `codes` with priority ordering.
+
+    Priority order:
+    1. System language (if in the list)
+    2. Project/subtitle language (if in the list)
+    3. Recently used languages (in most-recent-first order, if in the list)
+    4. Remaining languages sorted alphabetically by localized name
+
+    `codes` is a list of locale codes (e.g. ``["en_US", "fi", "fr"]``).
+    `system_code` is the system locale code (e.g. ``"fi_FI"`` or ``"fi"``).
+    `project_code` is the current project/spell-check language code.
+    `recent_codes` is a list of recently used locale codes, most recent first.
+
+    Returns a tuple ``(priority_codes, other_codes)`` where `priority_codes`
+    are the prioritized languages in order and `other_codes` are the remaining
+    languages sorted alphabetically by localized display name.
+    """
+    recent_codes = recent_codes or []
+    codes_set = set(codes)
+    # Build priority list in order, deduplicating as we go.
+    priority = []
+    seen = set()
+    # 1. System language (match by language prefix for locale codes like fi_FI).
+    if system_code:
+        system_lang = system_code[:2] if len(system_code) >= 2 else system_code
+        # Prefer exact match first, then language-prefix match.
+        for candidate in [system_code]:
+            if candidate in codes_set and candidate not in seen:
+                priority.append(candidate)
+                seen.add(candidate)
+        # Also include codes that share the language prefix.
+        for code in codes:
+            if code[:2] == system_lang and code not in seen:
+                priority.append(code)
+                seen.add(code)
+    # 2. Project/subtitle language.
+    if project_code:
+        project_lang = project_code[:2] if len(project_code) >= 2 else project_code
+        for candidate in [project_code]:
+            if candidate in codes_set and candidate not in seen:
+                priority.append(candidate)
+                seen.add(candidate)
+        for code in codes:
+            if code[:2] == project_lang and code not in seen:
+                priority.append(code)
+                seen.add(code)
+    # 3. Recently used languages (preserve order, most recent first).
+    for code in recent_codes:
+        if code in codes_set and code not in seen:
+            priority.append(code)
+            seen.add(code)
+    # 4. Remaining languages sorted alphabetically by localized name.
+    other = [c for c in codes if c not in seen]
+    other.sort(key=lambda c: code_to_name(c))
+    return (priority, other)

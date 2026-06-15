@@ -378,12 +378,26 @@ class LocalePage(BuilderPage):
         self._populate_combo(self._country_combo, items, self.conf.country)
 
     def _populate_language_combo(self):
-        """Populate the language combo box."""
+        """Populate the language combo box with priority ordering."""
         script = self._get_script()
         codes = self._manager.get_languages(script)
         names = list(map(aeidon.languages.code_to_name, codes))
-        items = [(codes[i], names[i]) for i in range(len(codes))]
-        items.sort(key=lambda x: x[1])
+        # Use priority sorting for language list.
+        system_code = aeidon.locales.get_system_code()
+        project_code = gaupol.conf.spell_check.language
+        recent_codes = list(gaupol.conf.spell_check.recent_languages)
+        priority, other = aeidon.languages.sort_languages(
+            codes,
+            system_code=system_code,
+            project_code=project_code,
+            recent_codes=recent_codes)
+        items = []
+        for code in priority:
+            items.append((code, aeidon.languages.code_to_name(code)))
+        if priority and other:
+            items.append((gaupol.COMBO_SEPARATOR, ""))
+        for code in other:
+            items.append((code, aeidon.languages.code_to_name(code)))
         self._populate_combo(self._language_combo, items, self.conf.language)
 
     def _populate_script_combo(self):

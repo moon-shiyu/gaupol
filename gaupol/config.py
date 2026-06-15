@@ -160,6 +160,7 @@ CONFIG_DEFAULTS = {
         "field": gaupol.fields.MAIN_TEXT,
         "inline": False,
         "language": "en",
+        "recent_languages": [],
         "size": [500, 309],
         "target": gaupol.targets.CURRENT,
     },
