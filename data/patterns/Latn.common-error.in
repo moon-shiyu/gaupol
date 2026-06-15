@@ -1,0 +1,313 @@
+# -*- conf -*-
+
+[Common Error Pattern]
+# Some OCR software seem to infest subtitles with ligature characters,
+# causing a multitude of problems all the way to playback.
+# https://en.wikipedia.org/wiki/Typographic_ligature#Ligatures_in_Unicode_(Latin_alphabets)
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb00
+Flags=DOTALL;MULTILINE;
+Replacement=ff
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb01
+Flags=DOTALL;MULTILINE;
+Replacement=fi
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb02
+Flags=DOTALL;MULTILINE;
+Replacement=fl
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb03
+Flags=DOTALL;MULTILINE;
+Replacement=ffi
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb04
+Flags=DOTALL;MULTILINE;
+Replacement=ffl
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb05
+Flags=DOTALL;MULTILINE;
+Replacement=ft
+Repeat=False
+
+[Common Error Pattern]
+Name=Ligatures
+Description=Unpack ligatures to individual characters
+Classes=OCR;
+Pattern=\ufb06
+Flags=DOTALL;MULTILINE;
+Replacement=st
+Repeat=False
+
+[Common Error Pattern]
+Name=Spelling of a.m. and p.m.
+Description=Change the various spellings of 12-hour periods to "a.m." and "p.m."
+Classes=Human;OCR;
+Pattern=(\d)(\s*a\.? ?m\.?)(\W|$)
+Flags=DOTALL;MULTILINE;IGNORECASE;
+Replacement=\1 a.m.\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Spelling of a.m. and p.m.
+Description=Change the various spellings of 12-hour periods to "a.m." and "p.m."
+Classes=Human;OCR;
+Pattern=(\d)(\s*p\.? ?m\.?)(\W|$)
+Flags=DOTALL;MULTILINE;IGNORECASE;
+Replacement=\1 p.m.\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Letter "O" in a number
+Description=Replace letter "O" with a zero in a number
+Classes=OCR;
+Pattern=((?<![^\W\d])(\d|\d[,.]))[oO]
+Flags=DOTALL;MULTILINE;
+Replacement=\1\060
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "O" in a number
+Description=Replace letter "O" with a zero in a number
+Classes=OCR;
+# Disallow "2" after the "O" for the case of Oxygen, "O2".
+Pattern=[oO]((?!2\W)(\d|[,.]\d)(?![^\W\d]))
+Flags=DOTALL;MULTILINE;
+Replacement=\060\1
+Repeat=True
+
+[Common Error Pattern]
+Name=Space between number and unit
+Description=Add or remove space between a number and the associated unit
+Classes=Human;OCR;
+Pattern=([$£€]) (\d+)
+Flags=DOTALL;MULTILINE;
+Replacement=\1\2
+Repeat=False
+
+[Common Error Pattern]
+Name=Double apostrophe
+Description=Replace a double apostrophe with a quotation mark
+Classes=OCR;
+Pattern=(''|‘‘|’’)
+Flags=DOTALL;MULTILINE;
+Replacement="
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around brackets
+Description=Add or remove spaces around parentheses and square brackets
+Classes=Human;OCR;
+Pattern=(\S)(\(|\[)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around brackets
+Description=Add or remove spaces around parentheses and square brackets
+Classes=Human;OCR;
+Pattern=(\)|\])(\w)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around brackets
+Description=Add or remove spaces around parentheses and square brackets
+Classes=Human;OCR;
+Pattern=(\(|\[)( )
+Flags=DOTALL;MULTILINE;
+Replacement=\1
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around brackets
+Description=Add or remove spaces around parentheses and square brackets
+Classes=Human;OCR;
+Pattern=( )(\)|\])
+Flags=DOTALL;MULTILINE;
+Replacement=\2
+Repeat=False
+
+[Common Error Pattern]
+Name=Space after a dialogue dash
+Description=Add space after a dialogue dash
+Classes=Human;OCR;
+Pattern=^([\-\–\—])([^\-\–\—\s])
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Space before punctuation marks
+Description=Remove space before various punctuation marks
+Classes=Human;OCR;
+# NOTE: Unsuitable for French, see Latn-fr.
+# Disallow trailing digits for the case of fractions, e.g. ".45".
+Pattern=\0 +(['‘’"“”«»]?(?!\.\.)([,;:.?!])(?!\d))
+Flags=DOTALL;MULTILINE;
+Replacement=\1
+Repeat=False
+
+[Common Error Pattern]
+Name=Space after punctuation marks
+Description=Add space after various punctuation marks
+Classes=Human;OCR;
+# NOTE: Unsuitable for Finnish, see Latn-fi.
+Pattern=((\w|^|['‘’"“”«»]) ?[,;:?!])(?!['‘’"“”«»])([^\W\d][\w\s])
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \3
+Repeat=False
+
+[Common Error Pattern]
+Name=Space after an ellipsis
+Description=Add space after an ellipsis
+Classes=Human;OCR;
+Pattern=(\w[^\w\s]*?(\.\.\.|…))(['‘’"“”«»]?\w)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \3
+Repeat=False
+
+[Common Error Pattern]
+Name=Space after a starting ellipsis
+Description=Remove space after an ellipsis that starts a line
+Classes=Human;OCR;
+Pattern=(^\W*?(\.\.\.|…))( +)
+Flags=DOTALL;MULTILINE;
+Replacement=\1
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around a quotation mark
+Description=Remove space after a starting- and before an ending quotation mark
+Classes=OCR;
+# Remove space after the starting quotation mark in a subtitle
+# with a total of exactly two quotation marks.
+Pattern=(\A[^"“”]*["“”])( +)([^"“”]*["“”][^"“”]*\Z)
+Flags=DOTALL;MULTILINE;
+Replacement=\1\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around a quotation mark
+Description=Remove space after a starting- and before an ending quotation mark
+Classes=OCR;
+# Remove space before the ending quotation mark in a subtitle
+# with a total of exactly two quotation marks.
+Pattern=(\A[^"“”]*["“”][^"“”]*)( +)(["“”][^"“”]*\Z)
+Flags=DOTALL;MULTILINE;
+Replacement=\1\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around a quotation mark
+Description=Remove space after a starting- and before an ending quotation mark
+Classes=OCR;
+# Remove space after a quotation mark at the beginning of the line.
+Pattern=^(\W*?['‘’"“”])( +)
+Flags=DOTALL;MULTILINE;
+Replacement=\1
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around a quotation mark
+Description=Remove space after a starting- and before an ending quotation mark
+Classes=OCR;
+# Remove space before a quotation mark at the end of the line.
+Pattern=( +)(['‘’"“”]\W*?)$
+Flags=DOTALL;MULTILINE;
+Replacement=\2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around musical notes
+Description=Add spaces between musical note characters and lyrics
+Classes=OCR;
+Pattern=^(\W*?(?!#\d)[♩♪♫♬#]+)(\S)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around musical notes
+Description=Add spaces between musical note characters and lyrics
+Classes=OCR;
+Pattern=(\S)([♩♪♫♬#]+\W*?)$
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Multiple question- and exclamation marks
+Description=Replace multiple consequtive question- and exclamation marks with only one
+Classes=Human;
+Pattern=(\w\W*)(?<!^)(?<!\?)\?{2,}
+Flags=DOTALL;MULTILINE;
+Replacement=\1?
+Repeat=False
+
+[Common Error Pattern]
+Name=Multiple question- and exclamation marks
+Description=Replace multiple consequtive question- and exclamation marks with only one
+Classes=Human;
+Pattern=(\w\W*)(?<!^)(?<!\!)\!{2,}
+Flags=DOTALL;MULTILINE;
+Replacement=\1!
+Repeat=False
+
+[Common Error Pattern]
+Name=Periods around a punctuation mark
+Description=Remove period before or after various punctuation marks
+Classes=OCR;
+# Remove period after the mark.
+Pattern=(?<=[:?!])\.(?!\.)
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+Repeat=False
+
+[Common Error Pattern]
+Name=Periods around a punctuation mark
+Description=Remove period before or after various punctuation marks
+Classes=OCR;
+# Remove period before the mark.
+Pattern=(?<!\.\w)(?<!\.)\.(?=[:?!])
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+Repeat=False
+
+[Common Error Pattern]
+Name=Terminating double-dashes
+Description=Replace a single clause-terminating dash with two dashes
+Classes=Human;OCR;
+Pattern=([\w'‘’"“”«»])-(?!-)([^\w'‘’"“”«»]|$)
+Flags=DOTALL;MULTILINE;
+Replacement=\1--\2
+Repeat=False

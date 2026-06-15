@@ -1,0 +1,15 @@
+# -*- conf -*-
+
+[Capitalization Pattern]
+Name=Sentence
+Description=Capitalize the first word of a sentence
+Capitalize=After
+Pattern=((?<!\..)\.|[?!])['‘’"“”«»]?( |$)
+Flags=DOTALL;MULTILINE;
+
+[Capitalization Pattern]
+Name=Ellipsis
+Description=Capitalize after an ellipsis
+Capitalize=After
+Pattern=(\.\.\.|…)['‘’"“”«»]?( |$)
+Flags=DOTALL;MULTILINE;
