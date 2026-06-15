@@ -89,3 +89,37 @@ class TestLiner(aeidon.TestCase):
             "was bored she took a golden ball,\n"
             "and threw it up high and caught it; and\n"
             "this ball was her favorite plaything.")
+
+    def test_calc_text_stats__single_line(self):
+        stats = self.liner.calc_text_stats("Hello, world!")
+        assert stats["max_line_length"] == 13
+        assert stats["line_count"] == 1
+
+    def test_calc_text_stats__multiline(self):
+        text = "Short line.\nA somewhat longer line.\nTiny."
+        stats = self.liner.calc_text_stats(text)
+        assert stats["max_line_length"] == 27
+        assert stats["line_count"] == 3
+
+    def test_calc_text_stats__empty(self):
+        stats = self.liner.calc_text_stats("")
+        assert stats["max_line_length"] == 0
+        assert stats["line_count"] == 0
+
+    def test_calc_text_stats__custom_length_func(self):
+        self.liner.length_func = lambda x: len(x) * 2
+        stats = self.liner.calc_text_stats("Hello\nWorld!")
+        assert stats["max_line_length"] == 12  # len("Hello") * 2 = 10, len("World!") * 2 = 12
+        assert stats["line_count"] == 2
+
+    def test_calc_text_stats__before_after_break(self):
+        text = ("Close by the king's castle "
+                "lay a great dark forest.")
+        orig_stats = self.liner.calc_text_stats(text)
+        assert orig_stats["max_line_length"] == len(text)
+        assert orig_stats["line_count"] == 1
+        self.liner.set_text(text)
+        new_text = self.liner.break_lines()
+        new_stats = self.liner.calc_text_stats(new_text)
+        assert new_stats["max_line_length"] <= orig_stats["max_line_length"]
+        assert new_stats["line_count"] == 2

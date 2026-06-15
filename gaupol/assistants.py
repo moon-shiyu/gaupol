@@ -827,6 +827,7 @@ class ConfirmationPage(BuilderPage):
         self.application = None
         self.conf = gaupol.conf.text_assistant
         self.doc = None
+        self._stats_column = None
         # TRANSLATORS: Keep these page titles short, since they
         # affect the width of the text correction assistant sidebar.
         self.page_title = _("Confirm Changes")
@@ -865,7 +866,7 @@ class ConfirmationPage(BuilderPage):
         changes = []
         store = self._tree_view.get_model()
         for row in (x for x in store if x[2]):
-            page, index, accept, orig, new = row
+            page, index, accept, orig, new, stats = row
             changes.append((page, index, orig, new))
         return tuple(changes)
 
@@ -879,8 +880,8 @@ class ConfirmationPage(BuilderPage):
 
     def _init_tree_view(self):
         """Initialize the tree view of corrections."""
-        # page, index, accept, original text, new text
-        store = Gtk.ListStore(object, int, bool, str, str)
+        # page, index, accept, original text, new text, stats
+        store = Gtk.ListStore(object, int, bool, str, str, str)
         self._tree_view.set_model(store)
         selection = self._tree_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
@@ -900,6 +901,17 @@ class ConfirmationPage(BuilderPage):
         column = self._tree_view.get_column(2)
         renderer = column.get_cells()[0]
         renderer.connect("edited", self._on_tree_view_cell_edited)
+        # Line-break length statistics column (hidden by default).
+        renderer = Gtk.CellRendererText()
+        renderer.props.font = gaupol.util.get_font()
+        renderer.props.yalign = 0
+        renderer.props.xpad = 4
+        renderer.props.ypad = 4
+        self._stats_column = Gtk.TreeViewColumn(
+            _("Length"), renderer, text=5)
+        self._stats_column.set_resizable(True)
+        self._stats_column.set_visible(False)
+        self._tree_view.append_column(self._stats_column)
 
     def _init_values(self):
         """Initialize default values for widgets."""
@@ -960,8 +972,10 @@ class ConfirmationPage(BuilderPage):
         """Populate the tree view of changes to texts."""
         self._tree_view.get_model().clear()
         store = self._tree_view.get_model()
-        for page, index, orig, new in changes:
-            store.append((page, index, True, orig, new))
+        has_stats = any(s for _, _, _, _, s in changes)
+        self._stats_column.set_visible(has_stats)
+        for page, index, orig, new, stats in changes:
+            store.append((page, index, True, orig, new, stats or ""))
         self._tree_view.get_selection().unselect_all()
 
 
@@ -1012,6 +1026,20 @@ class TextAssistant(Gtk.Assistant):
         copy.subtitles = [x.copy() for x in project.subtitles]
         return copy
 
+    @staticmethod
+    def _format_line_break_stats(orig, new, length_func):
+        """Return a formatted string with line-break length stats."""
+        orig_lines = orig.split("\n")
+        new_lines = new.split("\n")
+        orig_max = max(length_func(l) for l in orig_lines)
+        new_max = max(length_func(l) for l in new_lines)
+        orig_cnt = len(orig_lines)
+        new_cnt = len(new_lines)
+        if orig_max == new_max and orig_cnt == new_cnt:
+            return ""
+        return "{}\u2192{} chr\n{}\u2192{} lines".format(
+            orig_max, new_max, orig_cnt, new_cnt)
+
     def _correct_texts(self, assistant_pages):
         """Correct texts by all pages and present changes."""
         changes = []
@@ -1035,11 +1063,25 @@ class TextAssistant(Gtk.Assistant):
                 self._progress_page.set_task_name(page.title)
                 page.correct_texts(dummy, rows, doc)
                 self._progress_page.bump_progress()
+            # Compute per-subtitle length stats when the line-break
+            # task was among the selected assistant pages.
+            has_line_break = any(
+                isinstance(p, LineBreakPage) for p in assistant_pages)
+            length_func = None
+            if has_line_break:
+                unit = getattr(
+                    gaupol.conf.line_break, "length_unit", None)
+                if unit is not None:
+                    length_func = gaupol.ruler.get_length_function(unit)
             for i in range(len(static_subtitles)):
                 orig = project.subtitles[i].get_text(doc)
                 new = static_subtitles[i].get_text(doc)
                 if orig == new: continue
-                changes.append((application_page, i, orig, new))
+                stats = ""
+                if length_func is not None:
+                    stats = self._format_line_break_stats(
+                        orig, new, length_func)
+                changes.append((application_page, i, orig, new, stats))
         self._prepare_confirmation_page(doc, changes)
         self.set_current_page(self.get_current_page() + 1)
 

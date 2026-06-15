@@ -139,6 +139,26 @@ class Liner(aeidon.Parser):
         # If text cannot be broken, return original text.
         return self.get_text()
 
+    def calc_text_stats(self, text):
+        """
+        Return line-length statistics for `text`.
+
+        Returns a dictionary with keys ``max_line_length`` (the length of
+        the longest line measured by :attr:`length_func`) and
+        ``line_count`` (number of lines).  The text is split on newline
+        characters; each line's length is measured independently.  This is
+        useful for comparing line layouts before and after
+        :meth:`break_lines`.
+        """
+        if not text:
+            return {"max_line_length": 0, "line_count": 0}
+        lines = text.split("\n")
+        lengths = [self.length_func(line) for line in lines]
+        return {
+            "max_line_length": max(lengths) if lengths else 0,
+            "line_count": len(lines),
+        }
+
     def _calculate_demerit(self, boxes, penalties, breaks):
         """Return demerit measure for `boxes` broken by `breaks`."""
         nlines = len(breaks) + 1
