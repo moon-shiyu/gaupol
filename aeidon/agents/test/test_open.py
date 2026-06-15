@@ -18,6 +18,8 @@
 import aeidon
 import codecs
 
+from unittest.mock import patch, MagicMock
+
 
 class TestOpenAgent(aeidon.TestCase):
 
@@ -70,3 +72,69 @@ class TestOpenAgent(aeidon.TestCase):
         self.project.open_translation(path, "ascii")
         assert self.project.subtitles
         assert self.project.tran_file.encoding == "utf_8_sig"
+
+    # --- Encoding candidates ---
+
+    def _make_mock_detection(self, encoding, confidence, uncertain,
+                             candidates=None):
+        """Return a mock DetectionResult."""
+        if candidates is None:
+            candidates = [
+                aeidon.encodings.EncodingCandidate(encoding, confidence, ""),
+            ]
+        result = aeidon.encodings.DetectionResult(
+            encoding=encoding,
+            confidence=confidence,
+            candidates=candidates,
+        )
+        return result
+
+    def test_open_main__encoding_candidates_explicit(self):
+        path = self.new_subrip_file()
+        self.project.open_main(path, "ascii")
+        assert self.project.main_file.encoding_candidates == []
+
+    @patch("aeidon.util.chardet_available", return_value=True)
+    def test_open_main__encoding_candidates_uncertain(self, mock_avail):
+        path = self.new_subrip_file()
+        candidates = [
+            aeidon.encodings.EncodingCandidate("ascii", 0.50, ""),
+            aeidon.encodings.EncodingCandidate("cp1252", 0.45, ""),
+        ]
+        mock_result = self._make_mock_detection("ascii", 0.50, True,
+                                                candidates)
+        with patch("aeidon.encodings.detect_candidates",
+                   return_value=mock_result):
+            self.project.open_main(path, encoding=None)
+        assert len(self.project.main_file.encoding_candidates) == 2
+        assert self.project.main_file.encoding_candidates[0].encoding == "ascii"
+        assert self.project.main_file.encoding_candidates[1].encoding == "cp1252"
+
+    @patch("aeidon.util.chardet_available", return_value=True)
+    def test_open_main__encoding_candidates_certain(self, mock_avail):
+        path = self.new_subrip_file()
+        mock_result = self._make_mock_detection("ascii", 0.95, False)
+        with patch("aeidon.encodings.detect_candidates",
+                   return_value=mock_result):
+            self.project.open_main(path, encoding=None)
+        assert self.project.main_file.encoding_candidates == []
+
+    @patch("aeidon.util.chardet_available", return_value=True)
+    def test_open_translation__encoding_candidates_uncertain(self, mock_avail):
+        path = self.new_subrip_file()
+        candidates = [
+            aeidon.encodings.EncodingCandidate("ascii", 0.40, ""),
+            aeidon.encodings.EncodingCandidate("latin_1", 0.35, ""),
+        ]
+        mock_result = self._make_mock_detection("ascii", 0.40, True,
+                                                candidates)
+        with patch("aeidon.encodings.detect_candidates",
+                   return_value=mock_result):
+            self.project.open_translation(path, encoding=None)
+        assert len(self.project.tran_file.encoding_candidates) == 2
+
+    @patch("aeidon.util.chardet_available", return_value=False)
+    def test_open_main__chardet_unavailable(self, mock_avail):
+        path = self.new_subrip_file()
+        self.project.open_main(path, encoding=None)
+        assert self.project.main_file.encoding_candidates == []

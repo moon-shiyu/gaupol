@@ -93,17 +93,29 @@ class OpenAgent(aeidon.Delegate):
         Return the amount of subtitles that needed to be moved in order
         to arrange them in ascending chronological order.
 
+        When *encoding* is ``None`` and charset_normalizer is available,
+        auto-detection is attempted.  If the detection result is uncertain,
+        the set of candidate encodings is stored in
+        :attr:`main_file.encoding_candidates` for UI consumption.
+
         Raise :exc:`IOError` if reading fails.
         Raise :exc:`UnicodeError` if decoding fails.
         Raise :exc:`aeidon.FormatError` if unable to detect format.
         Raise :exc:`aeidon.ParseError` if parsing fails.
         """
-        encoding = encoding or aeidon.util.get_default_encoding()
         bom_encoding = aeidon.encodings.detect_bom(path)
         if not bom_encoding in (encoding, None):
             return self.open_main(path, bom_encoding)
+        detection_result = None
+        if encoding is None and aeidon.util.chardet_available():
+            detection_result = aeidon.encodings.detect_candidates(path)
+            if detection_result.encoding is not None:
+                encoding = detection_result.encoding
+        encoding = encoding or aeidon.util.get_default_encoding()
         format = aeidon.util.detect_format(path, encoding)
         self.main_file = aeidon.files.new(format, path, encoding)
+        if detection_result is not None and detection_result.is_uncertain:
+            self.main_file.encoding_candidates = detection_result.candidates
         subtitles = self._read_file(self.main_file)
         self.subtitles, sort_count = self._sort_subtitles(subtitles)
         self.set_framerate(self.framerate, register=None)
@@ -132,6 +144,11 @@ class OpenAgent(aeidon.Delegate):
         and that one main subtitle may correspond to two translation subtitles,
         or vice versa, as per length restrictions etc.
 
+        When *encoding* is ``None`` and charset_normalizer is available,
+        auto-detection is attempted.  If the detection result is uncertain,
+        the set of candidate encodings is stored in
+        :attr:`tran_file.encoding_candidates` for UI consumption.
+
         Return the amount of subtitles that needed to be moved in order
         to arrange them in ascending chronological order.
 
@@ -140,13 +157,20 @@ class OpenAgent(aeidon.Delegate):
         Raise :exc:`aeidon.FormatError` if unable to detect format.
         Raise :exc:`aeidon.ParseError` if parsing fails.
         """
-        encoding = encoding or aeidon.util.get_default_encoding()
         align_method = align_method or aeidon.align_methods.POSITION
         bom_encoding = aeidon.encodings.detect_bom(path)
         if not bom_encoding in (encoding, None):
             return self.open_translation(path, bom_encoding, align_method)
+        detection_result = None
+        if encoding is None and aeidon.util.chardet_available():
+            detection_result = aeidon.encodings.detect_candidates(path)
+            if detection_result.encoding is not None:
+                encoding = detection_result.encoding
+        encoding = encoding or aeidon.util.get_default_encoding()
         format = aeidon.util.detect_format(path, encoding)
         self.tran_file = aeidon.files.new(format, path, encoding)
+        if detection_result is not None and detection_result.is_uncertain:
+            self.tran_file.encoding_candidates = detection_result.candidates
         subtitles = self._read_file(self.tran_file)
         subtitles, sort_count = self._sort_subtitles(subtitles)
         for subtitle in subtitles:

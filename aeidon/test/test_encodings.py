@@ -19,7 +19,7 @@ import aeidon
 import codecs
 
 from aeidon.i18n   import _
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # https://docs.python.org/3.10/library/codecs.html#standard-encodings
 ENCODINGS = [
@@ -242,3 +242,124 @@ class TestModule(aeidon.TestCase):
         assert translate_code("johab") == "johab"
         assert translate_code("UTF-8") == "utf_8"
         assert translate_code("ISO-8859-1") == "latin_1"
+
+    # --- EncodingCandidate ---
+
+    def test_encoding_candidate(self):
+        c = aeidon.encodings.EncodingCandidate("utf_8", 0.95, "English")
+        assert c.encoding == "utf_8"
+        assert c.confidence == 0.95
+        assert c.language == "English"
+
+    def test_encoding_candidate__empty_language(self):
+        c = aeidon.encodings.EncodingCandidate("ascii", 0.80, "")
+        assert c.language == ""
+
+    # --- DetectionResult ---
+
+    def test_detection_result__defaults(self):
+        r = aeidon.encodings.DetectionResult()
+        assert r.encoding is None
+        assert r.confidence == 0.0
+        assert r.candidates == []
+
+    def test_detection_result__with_values(self):
+        candidates = [
+            aeidon.encodings.EncodingCandidate("utf_8", 0.95, ""),
+            aeidon.encodings.EncodingCandidate("ascii", 0.80, ""),
+        ]
+        r = aeidon.encodings.DetectionResult("utf_8", 0.95, candidates)
+        assert r.encoding == "utf_8"
+        assert r.confidence == 0.95
+        assert len(r.candidates) == 2
+
+    def test_detection_result__is_uncertain__true(self):
+        r = aeidon.encodings.DetectionResult("cp1252", 0.50)
+        assert r.is_uncertain
+
+    def test_detection_result__is_uncertain__false(self):
+        r = aeidon.encodings.DetectionResult("utf_8", 0.95)
+        assert not r.is_uncertain
+
+    def test_detection_result__is_uncertain__none_encoding(self):
+        r = aeidon.encodings.DetectionResult(None, 0.0)
+        assert not r.is_uncertain
+
+    def test_detection_result__repr(self):
+        r = aeidon.encodings.DetectionResult("utf_8", 0.95, [
+            aeidon.encodings.EncodingCandidate("utf_8", 0.95, ""),
+        ])
+        text = repr(r)
+        assert "utf_8" in text
+        assert "0.950" in text
+        assert "1" in text
+
+    # --- detect_candidates ---
+
+    @patch("aeidon.encodings.is_valid_code", lambda x: True)
+    def test_detect_candidates__bom(self):
+        path = self.new_subrip_file()
+        with open(path, "rb") as f:
+            blob = f.read()
+        with open(path, "wb") as f:
+            f.write(codecs.BOM_UTF8 + blob)
+        result = aeidon.encodings.detect_candidates(path)
+        assert result.encoding == "utf_8_sig"
+        assert result.confidence == 1.0
+        assert not result.is_uncertain
+        assert len(result.candidates) == 1
+        assert result.candidates[0].encoding == "utf_8_sig"
+
+    def _make_mock_match(self, encoding, coherence, language=""):
+        match = MagicMock()
+        match.encoding = encoding
+        match.coherence = coherence
+        match.language = language
+        return match
+
+    @patch("aeidon.encodings.detect_bom", return_value=None)
+    def test_detect_candidates__charset_normalizer(self, mock_bom):
+        mock_best = self._make_mock_match("utf_8", 0.95, "English")
+        mock_alt = self._make_mock_match("ascii", 0.70, "")
+        mock_result_set = MagicMock()
+        mock_result_set.best.return_value = mock_best
+        mock_result_set.__iter__ = MagicMock(
+            return_value=iter([mock_best, mock_alt]))
+        with patch("charset_normalizer.from_path",
+                   return_value=mock_result_set):
+            path = self.new_subrip_file()
+            result = aeidon.encodings.detect_candidates(path)
+        assert result.encoding == "utf_8"
+        assert result.confidence == 0.95
+        assert not result.is_uncertain
+        assert len(result.candidates) == 2
+        assert result.candidates[0].encoding == "utf_8"
+        assert result.candidates[1].encoding == "ascii"
+
+    @patch("aeidon.encodings.detect_bom", return_value=None)
+    def test_detect_candidates__uncertain(self, mock_bom):
+        mock_best = self._make_mock_match("cp1252", 0.40)
+        mock_alt = self._make_mock_match("latin_1", 0.38)
+        mock_result_set = MagicMock()
+        mock_result_set.best.return_value = mock_best
+        mock_result_set.__iter__ = MagicMock(
+            return_value=iter([mock_best, mock_alt]))
+        with patch("charset_normalizer.from_path",
+                   return_value=mock_result_set):
+            path = self.new_subrip_file()
+            result = aeidon.encodings.detect_candidates(path)
+        assert result.encoding == "cp1252"
+        assert result.is_uncertain
+        assert len(result.candidates) == 2
+
+    @patch("aeidon.encodings.detect_bom", return_value=None)
+    def test_detect_candidates__no_result(self, mock_bom):
+        mock_result_set = MagicMock()
+        mock_result_set.best.return_value = None
+        with patch("charset_normalizer.from_path",
+                   return_value=mock_result_set):
+            path = self.new_subrip_file()
+            result = aeidon.encodings.detect_candidates(path)
+        assert result.encoding is None
+        assert result.confidence == 0.0
+        assert result.candidates == []

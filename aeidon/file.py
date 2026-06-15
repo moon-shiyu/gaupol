@@ -33,6 +33,8 @@ class SubtitleFile:
     :cvar format: :attr:`aeidon.formats` item corresponding to file format
     :cvar mode: :attr:`aeidon.modes` item corresponding to native positions
     :ivar encoding: Character encoding used to read and write file
+    :ivar encoding_candidates: List of :data:`aeidon.encodings.EncodingCandidate`
+        tuples populated when auto-detection is uncertain, empty otherwise
     :ivar has_utf_16_bom: True if BOM found for UTF-16-BE or UTF-16-LE
     :ivar header: String of metadata at the top of the file
     :ivar newline: :attr:`aeidon.newlines` item, detected upon read
@@ -49,6 +51,7 @@ class SubtitleFile:
     def __init__(self, path, encoding, newline=None):
         """Initialize a :class:`SubtitleFile` instance."""
         self.encoding = encoding
+        self.encoding_candidates = []
         self.has_utf_16_bom = False
         self.header = (aeidon.util.get_template_header(self.format)
                        if self.format.has_header else "")
@@ -59,6 +62,7 @@ class SubtitleFile:
     def copy_from(self, other):
         """Copy generic properties from `other`."""
         self.has_utf_16_bom = other.has_utf_16_bom
+        self.encoding_candidates = list(other.encoding_candidates)
         if self.format != other.format: return
         self.header = other.header
 

@@ -27,6 +27,7 @@ import locale
 import re
 
 from aeidon.i18n import _
+from collections import namedtuple
 
 
 # Tuples of code, name and description for each supported character encoding.
@@ -140,6 +141,52 @@ CODE, NAME, DESC = range(3)
 # Illegal characters in encoding codes.
 _re_illegal = re.compile(r"[^a-z0-9_]")
 
+# Confidence threshold below which detection is considered uncertain
+# and multiple candidates should be reviewed.
+CONFIDENCE_UNCERTAIN = 0.75
+
+EncodingCandidate = namedtuple(
+    "EncodingCandidate", ["encoding", "confidence", "language"])
+"""A single candidate encoding from auto-detection.
+
+:param encoding: Python codec name (e.g. ``"utf_8"``)
+:param confidence: Coherence score from charset_normalizer (0.0 -- 1.0)
+:param language: Detected language hint or empty string
+"""
+
+
+class DetectionResult:
+
+    """
+    Result of character-encoding auto-detection.
+
+    :ivar encoding: Best-guess Python codec name, or ``None``
+    :ivar confidence: Coherence score of the best guess (0.0 -- 1.0)
+    :ivar candidates: List of :data:`EncodingCandidate` tuples,
+        sorted from best to worst. Empty when detection yielded
+        nothing or a BOM was found (BOM results are always certain).
+    """
+
+    __slots__ = ("encoding", "confidence", "candidates")
+
+    def __init__(self, encoding=None, confidence=0.0, candidates=None):
+        self.encoding = encoding
+        self.confidence = confidence
+        self.candidates = candidates or []
+
+    @property
+    def is_uncertain(self):
+        """Return ``True`` if detection confidence is below threshold."""
+        return (self.encoding is not None
+                and self.confidence < CONFIDENCE_UNCERTAIN)
+
+    def __repr__(self):
+        return ("DetectionResult(encoding={!r}, confidence={:.3f}, "
+                "candidates={})").format(
+                    self.encoding,
+                    self.confidence,
+                    len(self.candidates))
+
 
 def code_to_description(code):
     """Convert encoding `code` to localized description."""
@@ -183,6 +230,43 @@ def detect(path):
     if result is None:
         return None
     return result.encoding
+
+def detect_candidates(path):
+    """
+    Detect encoding of file at `path`, returning a :class:`DetectionResult`.
+
+    When a BOM is found, the result contains only that encoding with full
+    confidence and no additional candidates.  Otherwise all candidates
+    reported by *charset_normalizer* are included so that callers (UI
+    dialogs, error messages) can present alternatives when the best guess
+    is uncertain.
+
+    Raise :exc:`IOError` if reading fails.
+    """
+    bom_encoding = detect_bom(path)
+    if bom_encoding is not None:
+        return DetectionResult(
+            encoding=bom_encoding,
+            confidence=1.0,
+            candidates=[EncodingCandidate(bom_encoding, 1.0, "")],
+        )
+    from charset_normalizer import from_path
+    detector = from_path(path)
+    best = detector.best()
+    if best is None:
+        return DetectionResult()
+    candidates = []
+    for match in detector:
+        enc = match.encoding
+        coherence = match.coherence
+        language = match.language or ""
+        candidates.append(EncodingCandidate(enc, coherence, language))
+    # charset_normalizer already sorts by quality; keep that order.
+    return DetectionResult(
+        encoding=best.encoding,
+        confidence=best.coherence,
+        candidates=candidates,
+    )
 
 def detect_bom(path):
     """Return corresponding encoding if BOM found, else ``None``."""
