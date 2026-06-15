@@ -149,25 +149,44 @@ class Finder:
 
     def replace_all(self):
         """
-        Replace all occurences of pattern.
+        Replace all occurrences of pattern.
 
         Raise :exc:`re.error` if bad replacement.
-        Return the amount of substitutions made.
+        Return a dict with detailed statistics::
+
+            {
+                "matches": total number of matches found,
+                "replacements": actual number of replacements performed,
+                "first_pos": character offset of the first match (or None),
+                "last_pos": character offset of the last match (or None),
+            }
         """
         self.pos = 0
         self.match = None
         self.match_span = None
-        count = 0
+        matches = 0
+        replacements = 0
+        first_pos = None
+        last_pos = None
         while True:
             try:
-                self.next()
+                span = self.next()
             except StopIteration:
                 self.pos = len(self.text)
                 self.match_span = None
                 break
+            matches += 1
+            if first_pos is None:
+                first_pos = span[0]
+            last_pos = span[0]
             self.replace()
-            count += 1
-        return count
+            replacements += 1
+        return {
+            "matches": matches,
+            "replacements": replacements,
+            "first_pos": first_pos,
+            "last_pos": last_pos,
+        }
 
     def set_regex(self, pattern, flags=re.DOTALL|re.MULTILINE):
         """

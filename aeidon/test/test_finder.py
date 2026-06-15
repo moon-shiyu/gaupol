@@ -188,8 +188,11 @@ class TestFinder(aeidon.TestCase):
     def test_replace_all__regex(self):
         self.finder.set_regex(r"\s")
         self.finder.replacement = ""
-        count = self.finder.replace_all()
-        assert count == 9
+        result = self.finder.replace_all()
+        assert result["matches"] == 9
+        assert result["replacements"] == 9
+        assert result["first_pos"] == 3
+        assert result["last_pos"] == 44
         assert self.finder.text == (
             "Oneonlyrisksit,because"
             "one'ssurvivaldependsonit.")
@@ -197,8 +200,31 @@ class TestFinder(aeidon.TestCase):
     def test_replace_all__string(self):
         self.finder.pattern = "i"
         self.finder.replacement = "-"
-        count = self.finder.replace_all()
-        assert count == 4
+        result = self.finder.replace_all()
+        assert result["matches"] == 4
+        assert result["replacements"] == 4
+        assert result["first_pos"] == 10
+        assert result["last_pos"] == 53
         assert self.finder.text == (
             "One only r-sks -t, because\n"
             "one's surv-val depends on -t.")
+
+    def test_replace_all__no_match(self):
+        self.finder.pattern = "zzz"
+        self.finder.replacement = "xxx"
+        result = self.finder.replace_all()
+        assert result["matches"] == 0
+        assert result["replacements"] == 0
+        assert result["first_pos"] is None
+        assert result["last_pos"] is None
+        assert self.finder.text == self.text
+
+    def test_replace_all__statistics(self):
+        self.finder.pattern = "one"
+        self.finder.ignore_case = True
+        self.finder.replacement = "two"
+        result = self.finder.replace_all()
+        assert result["matches"] == 2
+        assert result["replacements"] == 2
+        assert result["first_pos"] == 0
+        assert result["last_pos"] == 27

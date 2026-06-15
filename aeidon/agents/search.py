@@ -230,23 +230,36 @@ class SearchAgent(aeidon.Delegate):
     @aeidon.deco.revertable
     def replace_all(self, register=-1):
         """
-        Replace all matches of pattern and return amount of replacements made.
+        Replace all matches of pattern and return detailed statistics.
 
         Raise :exc:`re.error` if bad replacement.
+        Return a dict with detailed statistics::
+
+            {
+                "matches": total number of matches found,
+                "replacements": actual number of replacements performed,
+                "rows": sorted list of affected subtitle row indices,
+            }
         """
-        counts = {}
+        total_matches = 0
+        total_replacements = 0
+        affected_rows = set()
+        doc_counts = {}
         for doc in self._docs:
-            counts[doc] = 0
+            doc_counts[doc] = 0
             new_indices = []
             new_texts = []
             for index, subtitle in enumerate(self.subtitles):
                 text = subtitle.get_text(doc)
                 self._finder.set_text(text)
-                sub_count = self._finder.replace_all()
-                if sub_count > 0:
+                result = self._finder.replace_all()
+                if result["replacements"] > 0:
                     new_indices.append(index)
                     new_texts.append(self._finder.text)
-                    counts[doc] += sub_count
+                    doc_counts[doc] += result["replacements"]
+                    total_matches += result["matches"]
+                    total_replacements += result["replacements"]
+                    affected_rows.add(index)
             if not new_indices: continue
             self.replace_texts(new_indices,
                                doc,
@@ -254,9 +267,14 @@ class SearchAgent(aeidon.Delegate):
                                register=register)
 
             self.set_action_description(register, _("Replacing all"))
-        if len(list(counts.keys())) == 2 and all(counts.values()):
+        if len(list(doc_counts.keys())) == 2 and all(doc_counts.values()):
             self.group_actions(register, 2, _("Replacing all"))
-        return sum(counts.values())
+        rows = sorted(affected_rows)
+        return {
+            "matches": total_matches,
+            "replacements": total_replacements,
+            "rows": rows,
+        }
 
     @aeidon.deco.export
     def set_search_regex(self, pattern, flags=re.DOTALL|re.MULTILINE):

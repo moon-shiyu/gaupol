@@ -456,21 +456,37 @@ class SearchDialog(gaupol.BuilderDialog):
     @aeidon.deco.silent(gaupol.Default)
     def replace_all(self):
         """Replace all matches of pattern."""
-        count = 0
+        total_matches = 0
+        total_replacements = 0
+        all_rows = []
         target = gaupol.conf.search.target
         for page in self.application.get_target_pages(target):
             self._set_pattern(page)
             self._set_replacement(page)
             try:
-                count += page.project.replace_all()
+                result = page.project.replace_all()
             except re.error as error:
                 self._show_regex_error_dialog_replacement(str(error))
                 break
+            total_matches += result["matches"]
+            total_replacements += result["replacements"]
+            all_rows.extend(result["rows"])
         self._reset_properties()
-        self._statuslabel.flash_text(n_(
-            "Found and replaced {:d} occurence",
-            "Found and replaced {:d} occurences",
-            count).format(count))
+        if all_rows:
+            min_row = min(all_rows) + 1
+            max_row = max(all_rows) + 1
+            row_range = ("{:d}-{:d}".format(min_row, max_row)
+                         if min_row != max_row
+                         else "{:d}".format(min_row))
+            self._statuslabel.flash_text(
+                _("Found {:d} match(es), replaced {:d} occurrence(s), "
+                  "subtitle row(s): {:s}")
+                .format(total_matches, total_replacements, row_range))
+        else:
+            self._statuslabel.flash_text(n_(
+                "Found and replaced {:d} occurence",
+                "Found and replaced {:d} occurences",
+                total_replacements).format(total_replacements))
 
     def _reset_properties(self):
         """Reset search properties to defaults."""

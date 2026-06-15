@@ -43,7 +43,7 @@ class Parser(aeidon.Finder):
         >>> parser.pattern = "i"
         >>> parser.replacement = "j"
         >>> parser.replace_all()
-        3
+        {'matches': 3, 'replacements': 3, 'first_pos': 0, 'last_pos': 2}
         >>> parser.get_text()
         '<i>jjj</i>'
 

@@ -174,7 +174,7 @@ class TextAgent(aeidon.Delegate):
                 parser.set_regex(string, flags)
                 parser.replacement = replacement
                 count = parser.replace_all()
-                while repeats[i] and count:
+                while repeats[i] and count["replacements"]:
                     count = parser.replace_all()
             text = parser.get_text()
             if text != subtitle.get_text(doc):

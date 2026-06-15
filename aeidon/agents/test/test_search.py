@@ -91,7 +91,10 @@ class TestSearchAgent(aeidon.TestCase):
         self.project.set_search_target(None, (MAIN, TRAN))
         self.project.set_search_regex(r"$")
         self.project.set_search_replacement("--")
-        self.project.replace_all()
+        result = self.project.replace_all()
+        assert result["matches"] == 12
+        assert result["replacements"] == 12
+        assert result["rows"] == [0, 1, 2]
         texts = ("God has promised you that--\nyou will go to Heaven?--",
                  "So you are certain of--\nbeing saved?--",
                  "Be careful,--\nit's a dangerous answer.--")
@@ -99,3 +102,22 @@ class TestSearchAgent(aeidon.TestCase):
         for i, text in enumerate(texts):
             assert self.project.subtitles[i].main_text == text
             assert self.project.subtitles[i].tran_text == text
+
+    def test_replace_all__no_match(self):
+        self.project.set_search_target(None, (MAIN,))
+        self.project.set_search_string("zzz_nomatch")
+        self.project.set_search_replacement("xxx")
+        result = self.project.replace_all()
+        assert result["matches"] == 0
+        assert result["replacements"] == 0
+        assert result["rows"] == []
+
+    @aeidon.deco.reversion_test
+    def test_replace_all__single_document(self):
+        self.project.set_search_target(None, (MAIN,))
+        self.project.set_search_string("you")
+        self.project.set_search_replacement("we")
+        result = self.project.replace_all()
+        assert result["matches"] == 3
+        assert result["replacements"] == 3
+        assert result["rows"] == [0, 1]
