@@ -136,6 +136,55 @@ class TestPositionAgent(aeidon.TestCase):
             assert subtitle.start_frame == start
             assert subtitle.end_frame == end
 
+    def test_get_shift_preview__all(self):
+        indices = self.project.get_all_indices()
+        preview = self.project.get_shift_preview(indices, 2.0)
+        assert preview is not None
+        first = preview["first"]
+        last = preview["last"]
+        assert first["index"] == indices[0]
+        assert last["index"] == indices[-1]
+        # Verify new_start matches calc.add on original start
+        calc = self.project.calc
+        sub_first = self.project.subtitles[indices[0]]
+        sub_last = self.project.subtitles[indices[-1]]
+        expected_first = calc.add(sub_first.start_time, 2.0)
+        expected_last = calc.add(sub_last.start_time, 2.0)
+        assert first["new_start"] == expected_first
+        assert last["new_start"] == expected_last
+        # Original positions should be unchanged
+        assert first["start"] == sub_first.start_time
+        assert last["start"] == sub_last.start_time
+
+    def test_get_shift_preview__subset(self):
+        indices = [1, 2, 3]
+        preview = self.project.get_shift_preview(indices, -1.5)
+        assert preview["first"]["index"] == 1
+        assert preview["last"]["index"] == 3
+
+    def test_get_shift_preview__does_not_modify(self):
+        orig_starts = [s.start_time for s in self.project.subtitles]
+        indices = self.project.get_all_indices()
+        self.project.get_shift_preview(indices, 5.0)
+        for i, subtitle in enumerate(self.project.subtitles):
+            assert subtitle.start_time == orig_starts[i]
+
+    def test_get_shift_preview__matches_shift(self):
+        indices = self.project.get_all_indices()
+        preview = self.project.get_shift_preview(indices, 2.0)
+        # Now actually shift and verify the preview was accurate
+        self.project.shift_positions(indices, 2.0)
+        first_sub = self.project.subtitles[indices[0]]
+        last_sub = self.project.subtitles[indices[-1]]
+        assert first_sub.start_time == preview["first"]["new_start"]
+        assert first_sub.end_time == preview["first"]["new_end"]
+        assert last_sub.start_time == preview["last"]["new_start"]
+        assert last_sub.end_time == preview["last"]["new_end"]
+
+    def test_get_shift_preview__empty_indices(self):
+        preview = self.project.get_shift_preview([], 1.0)
+        assert preview is None
+
     @aeidon.deco.reversion_test
     def test_transform_positions(self):
         a, b = "00:00:01.000", "00:00:45.000"

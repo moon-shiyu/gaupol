@@ -35,6 +35,8 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         "amount_spin",
         "current_radio",
         "preview_button",
+        "preview_first_label",
+        "preview_last_label",
         "selected_radio",
         "to_end_radio",
         "unit_label",
@@ -92,6 +94,10 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         if (page.project.video_path is None or
             page.project.main_file is None):
             self._preview_button.set_sensitive(False)
+        self._selected_radio.connect("toggled", self._on_target_radio_toggled)
+        self._to_end_radio.connect("toggled", self._on_target_radio_toggled)
+        self._current_radio.connect("toggled", self._on_target_radio_toggled)
+        self._all_radio.connect("toggled", self._on_target_radio_toggled)
         self._amount_spin.emit("value-changed")
 
     def _init_widgets(self):
@@ -99,9 +105,15 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         raise NotImplementedError
 
     def _on_amount_spin_value_changed(self, spin_button):
-        """Set response sensitivity."""
+        """Set response sensitivity and update preview."""
         has_value = (spin_button.get_value() != 0.0)
         self.set_response_sensitive(Gtk.ResponseType.OK, has_value)
+        self._update_preview()
+
+    def _on_target_radio_toggled(self, radio_button):
+        """Update preview when target selection changes."""
+        if radio_button.get_active():
+            self._update_preview()
 
     def _on_preview_button_clicked(self, *args):
         """Preview shift changes with a video player."""
@@ -119,6 +131,33 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         gaupol.conf.position_shift.target = self._get_target()
         if response == Gtk.ResponseType.OK:
             self._shift_positions()
+
+    def _update_preview(self):
+        """Update the preview labels with shifted first/last times."""
+        page = self.application.get_current_page()
+        rows = self.application.get_target_rows(self._get_target())
+        if not rows:
+            self._preview_first_label.set_text("—")
+            self._preview_last_label.set_text("—")
+            return
+        amount = self._get_amount()
+        preview = page.project.get_shift_preview(rows, amount)
+        if preview is None:
+            self._preview_first_label.set_text("—")
+            self._preview_last_label.set_text("—")
+            return
+        first = preview["first"]
+        last = preview["last"]
+        self._preview_first_label.set_text(
+            _("First (#{}): {} \u2192 {}").format(
+                first["index"] + 1,
+                first["start"],
+                first["new_start"]))
+        self._preview_last_label.set_text(
+            _("Last (#{}): {} \u2192 {}").format(
+                last["index"] + 1,
+                last["start"],
+                last["new_start"]))
 
     def _shift_positions(self):
         """Shift positions in subtitles."""

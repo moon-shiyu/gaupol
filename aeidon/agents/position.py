@@ -149,6 +149,48 @@ class PositionAgent(aeidon.Delegate):
         self.register_action(action)
 
     @aeidon.deco.export
+    def get_shift_preview(self, indices, value):
+        """
+        Return a preview of first and last subtitle positions after shift.
+
+        `indices` can be ``None`` to process all subtitles.
+        `value` can be any valid position type, negative to make subtitles
+        appear earlier, positive to make subtitles appear later.
+
+        Return a dictionary with keys ``first`` and ``last``, each containing
+        a dictionary with ``index``, ``start``, ``new_start``, ``end`` and
+        ``new_end`` as time strings.
+        """
+        indices = indices or self.get_all_indices()
+        if not indices:
+            return None
+        first_index = indices[0]
+        last_index = indices[-1]
+        calc = self.calc
+        first_sub = self.subtitles[first_index]
+        last_sub = self.subtitles[last_index]
+        first_new_start = calc.add(first_sub.start_time, value)
+        first_new_end = calc.add(first_sub.end_time, value)
+        last_new_start = calc.add(last_sub.start_time, value)
+        last_new_end = calc.add(last_sub.end_time, value)
+        return dict(
+            first=dict(
+                index=first_index,
+                start=first_sub.start_time,
+                new_start=first_new_start,
+                end=first_sub.end_time,
+                new_end=first_new_end,
+            ),
+            last=dict(
+                index=last_index,
+                start=last_sub.start_time,
+                new_start=last_new_start,
+                end=last_sub.end_time,
+                new_end=last_new_end,
+            ),
+        )
+
+    @aeidon.deco.export
     @aeidon.deco.revertable
     def shift_positions(self, indices, value, register=-1):
         """
