@@ -1,0 +1,38 @@
+# -*- conf -*-
+
+[Hearing Impaired Pattern]
+Name=Sound in brackets
+Description=Remove description of a sound between square brackets
+Pattern=\[.*?\]
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+
+[Hearing Impaired Pattern]
+Name=Sound in parentheses
+Description=Remove description of a sound between parentheses
+Pattern=\(.*?\)
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+
+[Hearing Impaired Pattern]
+Name=Song lyrics between number signs
+Description=Remove song lyrics starting with or between number signs
+# Remove up to the end of the subtitle if no terminating number sign.
+Pattern=#+.+?(#+|\Z)
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+
+[Hearing Impaired Pattern]
+Name=One-line song lyrics between number signs
+Description=Remove one-line song lyrics starting with or between number signs
+# Remove up to the end of the line if no terminating number sign.
+Pattern=#+.+?(#+|$)
+Flags=DOTALL;MULTILINE;
+Replacement=\0
+
+[Hearing Impaired Pattern]
+Name=Speaker before a colon
+Description=Replace the name of the speaker before a colon with a dialogue dash
+Pattern=^[\-\–\—]?\s*?[\w\[][\w#&'.\-\[\] ]+?:\s
+Flags=MULTILINE;
+Replacement=-\040

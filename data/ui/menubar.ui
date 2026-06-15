@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="menubar">
+    <submenu>
+      <attribute name="label" translatable="yes">_File</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_New</attribute>
+          <attribute name="action">win.new-project</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Open…</attribute>
+          <attribute name="action">win.open-main-files</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Open _Translation…</attribute>
+          <attribute name="action">win.open-translation-file</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">Open _Recent</attribute>
+          <section id="open-recent-main-placeholder">
+          </section>
+        </submenu>
+        <submenu>
+          <attribute name="label" translatable="yes">Open R_ecent Translation</attribute>
+          <section id="open-recent-translation-placeholder">
+          </section>
+        </submenu>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Save</attribute>
+          <attribute name="action">win.save-main-document</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save _As…</attribute>
+          <attribute name="action">win.save-main-document-as</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save Trans_lation</attribute>
+          <attribute name="action">win.save-translation-document</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save Translat_ion As…</attribute>
+          <attribute name="action">win.save-translation-document-as</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Close</attribute>
+          <attribute name="action">win.close-project</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Quit</attribute>
+          <attribute name="action">win.quit</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Undo</attribute>
+          <attribute name="action">win.undo-action</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Redo</attribute>
+          <attribute name="action">win.redo-action</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Edit Cell</attribute>
+          <attribute name="action">win.edit-value</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Edit _Next Cell</attribute>
+          <attribute name="action">win.edit-next-value</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">Stretc_h</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Start Earlier</attribute>
+              <attribute name="action">win.start-earlier</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">S_tart Later</attribute>
+              <attribute name="action">win.start-later</attribute>
+            </item>
+          </section>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">E_nd Earlier</attribute>
+              <attribute name="action">win.end-earlier</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">En_d Later</attribute>
+              <attribute name="action">win.end-later</attribute>
+            </item>
+          </section>
+        </submenu>
+        <item>
+          <attribute name="label" translatable="yes">Set St_art From Video Position</attribute>
+          <attribute name="action">win.set-start-from-video-position</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Set En_d From Video Position</attribute>
+          <attribute name="action">win.set-end-from-video-position</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Split Subtitle</attribute>
+          <attribute name="action">win.split-subtitle</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Merge Subtitles</attribute>
+          <attribute name="action">win.merge-subtitles</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Insert Subtitles…</attribute>
+          <attribute name="action">win.insert-subtitles</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Inser_t Subtitle At Video Position</attribute>
+          <attribute name="action">win.insert-subtitle-at-video-position</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Rem_ove Subtitles</attribute>
+          <attribute name="action">win.remove-subtitles</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">Sele_ction</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">Select _All</attribute>
+              <attribute name="action">win.select-all</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Invert Selection</attribute>
+              <attribute name="action">win.invert-selection</attribute>
+            </item>
+          </section>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">Extend To _Beginning</attribute>
+              <attribute name="action">win.extend-selection-to-beginning</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">Extend To _End</attribute>
+              <attribute name="action">win.extend-selection-to-end</attribute>
+            </item>
+          </section>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Previous From Video Position</attribute>
+              <attribute name="action">win.select-previous-from-video-position</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Next From Video Position</attribute>
+              <attribute name="action">win.select-next-from-video-position</attribute>
+            </item>
+          </section>
+        </submenu>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Preferences</attribute>
+          <attribute name="action">win.edit-preferences</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_View</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Tool_bar</attribute>
+          <attribute name="action">win.toggle-main-toolbar</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Video Player</attribute>
+          <attribute name="action">win.toggle-player</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">_Layout</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Horizontal</attribute>
+              <attribute name="action">win.set-layout</attribute>
+              <attribute name="target">HORIZONTAL</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Vertical</attribute>
+              <attribute name="action">win.set-layout</attribute>
+              <attribute name="target">VERTICAL</attribute>
+            </item>
+          </section>
+        </submenu>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Times</attribute>
+          <attribute name="action">win.set-edit-mode</attribute>
+          <attribute name="target">TIME</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Frames</attribute>
+          <attribute name="action">win.set-edit-mode</attribute>
+          <attribute name="target">FRAME</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">F_ramerate</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">2_3.976 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_23_976</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">2_4.000 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_24_000</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">2_5.000 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_25_000</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">2_9.970 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_29_970</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">30.000 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_30_000</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">50.000 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_50_000</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">59.940 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_59_940</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">60.000 fps</attribute>
+              <attribute name="action">win.set-framerate</attribute>
+              <attribute name="target">FPS_60_000</attribute>
+            </item>
+          </section>
+          <section id="custom-framerates-placeholder">
+          </section>
+        </submenu>
+        <submenu>
+          <attribute name="label" translatable="yes">_Columns</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_No.</attribute>
+              <attribute name="action">win.toggle-number-column</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Start</attribute>
+              <attribute name="action">win.toggle-start-column</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_End</attribute>
+              <attribute name="action">win.toggle-end-column</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Duration</attribute>
+              <attribute name="action">win.toggle-duration-column</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Text</attribute>
+              <attribute name="action">win.toggle-main-text-column</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">T_ranslation</attribute>
+              <attribute name="action">win.toggle-translation-text-column</attribute>
+            </item>
+          </section>
+        </submenu>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Text</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Cu_t</attribute>
+          <attribute name="action">win.cut-texts</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Copy</attribute>
+          <attribute name="action">win.copy-texts</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Paste</attribute>
+          <attribute name="action">win.paste-texts</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Cl_ear</attribute>
+          <attribute name="action">win.clear-texts</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Find And Replace…</attribute>
+          <attribute name="action">win.find-and-replace</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Find _Next</attribute>
+          <attribute name="action">win.find-next</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Find Pre_vious</attribute>
+          <attribute name="action">win.find-previous</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Italic</attribute>
+          <attribute name="action">win.toggle-italicization</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Dialogue</attribute>
+          <attribute name="action">win.toggle-dialogue-dashes</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">Ca_se</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">_Title</attribute>
+              <attribute name="action">win.use-title-case</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Sentence</attribute>
+              <attribute name="action">win.use-sentence-case</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Upper</attribute>
+              <attribute name="action">win.use-upper-case</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Lower</attribute>
+              <attribute name="action">win.use-lower-case</attribute>
+            </item>
+          </section>
+        </submenu>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">Vi_deo</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Load Video…</attribute>
+          <attribute name="action">win.load-video</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Play/Pause</attribute>
+          <attribute name="action">win.play-pause</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Play _Selection</attribute>
+          <attribute name="action">win.play-selection</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Seek _Previous</attribute>
+          <attribute name="action">win.seek-previous</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Seek _Next</attribute>
+          <attribute name="action">win.seek-next</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Seek _Backward</attribute>
+          <attribute name="action">win.seek-backward</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Seek _Forward</attribute>
+          <attribute name="action">win.seek-forward</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">S_eek Selection Start</attribute>
+          <attribute name="action">win.seek-selection-start</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">See_k Selection End</attribute>
+          <attribute name="action">win.seek-selection-end</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Audio</attribute>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">_Language</attribute>
+          <section id="audio-languages-placeholder">
+          </section>
+        </submenu>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">Volume _Down</attribute>
+          <attribute name="action">win.volume-down</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Volume _Up</attribute>
+          <attribute name="action">win.volume-up</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">T_ools</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Preview</attribute>
+          <attribute name="action">win.preview</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Select _Video…</attribute>
+          <attribute name="action">win.select-video-file</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Check Spelling</attribute>
+          <attribute name="action">win.check-spelling</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Co_nfigure Spell-check…</attribute>
+          <attribute name="action">win.configure-spell-check</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">C_orrect Texts…</attribute>
+          <attribute name="action">win.correct-texts</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Shift Positions…</attribute>
+          <attribute name="action">win.shift-positions</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Transform Positions…</attribute>
+          <attribute name="action">win.transform-positions</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Adjust _Durations…</attribute>
+          <attribute name="action">win.adjust-durations</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Convert _Framerate…</attribute>
+          <attribute name="action">win.convert-framerate</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Append File…</attribute>
+          <attribute name="action">win.append-file</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Spli_t Project…</attribute>
+          <attribute name="action">win.split-project</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Projects</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Save All</attribute>
+          <attribute name="action">win.save-all-documents</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Save _All As…</attribute>
+          <attribute name="action">win.save-all-documents-as</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Close All</attribute>
+          <attribute name="action">win.close-all-projects</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Previous</attribute>
+          <attribute name="action">win.activate-previous-project</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Next</attribute>
+          <attribute name="action">win.activate-next-project</attribute>
+        </item>
+      </section>
+      <section id="projects-placeholder">
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Help</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Documentation</attribute>
+          <attribute name="action">win.browse-documentation</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Report A Bug</attribute>
+          <attribute name="action">win.report-a-bug</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_About</attribute>
+          <attribute name="action">win.view-about-dialog</attribute>
+        </item>
+      </section>
+    </submenu>
+  </menu>
+</interface>

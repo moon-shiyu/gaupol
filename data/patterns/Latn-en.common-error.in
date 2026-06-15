@@ -1,0 +1,123 @@
+# -*- conf -*-
+
+[Common Error Pattern]
+Name=Letter "I" in a lower case word
+Description=Replace letter "I" with letter "l" in a lower case word
+Classes=OCR;
+Pattern=(?<=[a-z])I
+Flags=DOTALL;MULTILINE;
+Replacement=l
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "I" in a lower case word
+Description=Replace letter "I" with letter "l" in a lower case word
+Classes=OCR;
+Pattern=(?<=\b[A-ZÉ])I(?=[a-z])
+Flags=DOTALL;MULTILINE;
+Replacement=l
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "I" in a lower case word
+Description=Replace letter "I" with letter "l" in a lower case word
+Classes=OCR;
+Pattern='[Il][Il]\b
+Flags=DOTALL;MULTILINE;
+Replacement='ll
+Repeat=False
+
+[Common Error Pattern]
+Name=Letter "l" in an upper case word
+Description=Replace letter "l" with letter "I" in an upper case word
+Classes=OCR;
+Pattern=(?<=[A-ZÉ][A-ZÉ])l
+Flags=DOTALL;MULTILINE;
+Replacement=I
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "l" in an upper case word
+Description=Replace letter "l" with letter "I" in an upper case word
+Classes=OCR;
+Pattern=l(?=[A-ZÉ])
+Flags=DOTALL;MULTILINE;
+Replacement=I
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "l" in an upper case word
+Description=Replace letter "l" with letter "I" in an upper case word
+Classes=OCR;
+# Handle the case of the first person pronoun "I".
+# Disallow dashes for the case of spelling out a word, but allow them
+# for the case of stuttering.
+Pattern=(?<![a-hj-z]-)\bl\b(?!-[a-hj-z])
+Flags=DOTALL;MULTILINE;
+Replacement=I
+Repeat=True
+
+[Common Error Pattern]
+Name=Letter "l" in an upper case word
+Description=Replace letter "l" with letter "I" in an upper case word
+Classes=OCR;
+# Replace with "I" if "l" is the the first letter of a word
+# and is followed by a consonant.
+Pattern=((\s|^)['‘’"“”«»]?)l(?!bs)(?!lama)([bcdfghjklmnpqrstvwxz])
+Flags=DOTALL;MULTILINE;
+Replacement=\1I\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Zero in an upper case word
+Description=Replace zero with letter "O" in an upper case word
+Classes=OCR;
+Pattern=(?<=[A-ZÉ])0(?!\d)
+Flags=DOTALL;MULTILINE;
+Replacement=O
+Repeat=True
+
+[Common Error Pattern]
+Name=Zero in an upper case word
+Description=Replace zero with letter "O" in an upper case word
+Classes=OCR;
+Pattern=(?<!\d)0(?=[A-ZÉ])
+Flags=DOTALL;MULTILINE;
+Replacement=O
+Repeat=True
+
+[Common Error Pattern]
+Name=Space between number and unit
+Description=Add or remove space between a number and the associated unit
+Classes=Human;OCR;
+Pattern=(\d+) (st|nd|rd|th)\b
+Flags=DOTALL;MULTILINE;
+Replacement=\1\2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around an apostrophe
+Description=Remove spaces around an apostrophe
+Classes=OCR;
+Pattern=(\w)(' +| +')(d|ll|m|re|s|t|ve)\b
+Flags=DOTALL;MULTILINE;
+Replacement=\1'\3
+Repeat=False
+
+[Common Error Pattern]
+Name=Okay
+Description=Spell two-letter forms of "okay" in all upper case
+Classes=Human;
+Pattern=\b[Oo]k\b
+Flags=DOTALL;MULTILINE;
+Replacement=OK
+Repeat=False
+
+[Common Error Pattern]
+Name=Okay
+Description=Spell two-letter forms of "okay" in all upper case
+Classes=Human;
+Pattern=\b[Oo]\.k\.
+Flags=DOTALL;MULTILINE;
+Replacement=O.K.
+Repeat=False

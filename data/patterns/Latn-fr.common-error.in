@@ -1,0 +1,57 @@
+# -*- conf -*-
+
+[Common Error Pattern]
+Name=Spaces around guillemets
+Description=Add spaces around guillemets
+Classes=Human;OCR;
+Pattern=(\S)(«)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around guillemets
+Description=Add spaces around guillemets
+Classes=Human;OCR;
+Pattern=(»)(\w)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around guillemets
+Description=Add spaces around guillemets
+Classes=Human;OCR;
+Pattern=(«)(\S)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Spaces around guillemets
+Description=Add spaces around guillemets
+Classes=Human;OCR;
+Pattern=(\S)(»)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False
+
+[Common Error Pattern]
+Name=Space before punctuation marks
+Description=Add or remove space before various punctuation marks
+Classes=Human;OCR;
+# Same as the Latin pattern, except keep space before [?!;:].
+Pattern=\0 +(['‘’"“”«»]?(?!\.\.)([,.])(?!\d))
+Flags=DOTALL;MULTILINE;
+Replacement=\1
+Repeat=False
+Policy=Replace
+
+[Common Error Pattern]
+Name=Space before punctuation marks
+Description=Add or remove space before various punctuation marks
+Classes=Human;OCR;
+Pattern=([^\s?!;:])([?!;:])(?!\d)
+Flags=DOTALL;MULTILINE;
+Replacement=\1 \2
+Repeat=False

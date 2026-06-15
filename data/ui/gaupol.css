@@ -1,0 +1,21 @@
+/* -*- coding: utf-8-unix -*- */
+
+.gaupol-floating-label {
+  background-color: @theme_fg_color;
+  border-top-right-radius: 5px;
+  color: @theme_bg_color;
+  padding: 4px 9px 4px 4px;
+}
+
+.gaupol-tab-close-button {
+  margin: 0;
+  padding: 0;
+}
+
+.gaupol-video-background {
+  background-color: black;
+}
+
+.monospace {
+  font-family: monospace;
+}

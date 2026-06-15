@@ -1,0 +1,14 @@
+[share/gaupol/extensions/custom-framerates]
+data/extensions/custom-framerates/*.*
+
+[share/icons/hicolor/scalable/apps]
+data/icons/io.otsaloma.gaupol.svg
+
+[share/icons/hicolor/symbolic/apps]
+data/icons/io.otsaloma.gaupol-symbolic.svg
+
+[share/gaupol/ui]
+data/ui/*.*
+
+[share/gaupol/ui/text-assistant]
+data/ui/text-assistant/*.*
