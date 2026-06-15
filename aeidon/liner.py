@@ -21,7 +21,7 @@ import aeidon
 import re
 import sys
 
-__all__ = ("Liner",)
+__all__ = ("Liner", "compute_line_stats", "format_line_break_diff")
 
 
 class Liner(aeidon.Parser):
@@ -255,3 +255,44 @@ class Liner(aeidon.Parser):
         """Set the target text to search in and parse it."""
         aeidon.Parser.set_text(self, text.strip())
         self.text = self.text.strip()
+
+
+def compute_line_stats(text, length_func=len):
+    """Return line-breaking statistics for text.
+
+    Return value is a dictionary with keys ``line_count``,
+    ``max_length`` and ``lengths`` (a per-line length list).
+    """
+    lines = text.split("\n") if text else [""]
+    lengths = [length_func(line) for line in lines]
+    return dict(line_count=len(lines),
+                max_length=max(lengths) if lengths else 0,
+                lengths=lengths)
+
+
+def format_line_break_diff(original, new, length_func=len,
+                           max_length=0, max_lines=0):
+    """Return a compact summary of line-break changes.
+
+    The returned string shows before/after line count and maximum line
+    length.  If `max_length` or `max_lines` are positive, a trailing
+    mark indicates whether the new text satisfies those limits.
+    """
+    before = compute_line_stats(original, length_func)
+    after = compute_line_stats(new, length_func)
+    parts = []
+    bl, al = before["line_count"], after["line_count"]
+    bm, am = before["max_length"], after["max_length"]
+    if isinstance(am, float):
+        parts.append("{:.0f}>{:.0f}".format(bl, al))
+        parts.append("{:.0f}>{:.0f}".format(bm, am))
+    else:
+        parts.append("{}>{}".format(bl, al))
+        parts.append("{}>{}".format(bm, am))
+    ok = True
+    if max_length > 0 and am > max_length:
+        ok = False
+    if max_lines > 0 and al > max_lines:
+        ok = False
+    return "L:{} W:{} {}".format(parts[0], parts[1],
+                                 "[OK]" if ok else "[!]")

@@ -827,6 +827,9 @@ class ConfirmationPage(BuilderPage):
         self.application = None
         self.conf = gaupol.conf.text_assistant
         self.doc = None
+        self._line_break_max_length = 0
+        self._line_break_max_lines = 0
+        self._line_break_length_func = len
         # TRANSLATORS: Keep these page titles short, since they
         # affect the width of the text correction assistant sidebar.
         self.page_title = _("Confirm Changes")
@@ -879,8 +882,8 @@ class ConfirmationPage(BuilderPage):
 
     def _init_tree_view(self):
         """Initialize the tree view of corrections."""
-        # page, index, accept, original text, new text
-        store = Gtk.ListStore(object, int, bool, str, str)
+        # page, index, accept, original text, new text, length diff
+        store = Gtk.ListStore(object, int, bool, str, str, str)
         self._tree_view.set_model(store)
         selection = self._tree_view.get_selection()
         selection.set_mode(Gtk.SelectionMode.SINGLE)
@@ -900,6 +903,13 @@ class ConfirmationPage(BuilderPage):
         column = self._tree_view.get_column(2)
         renderer = column.get_cells()[0]
         renderer.connect("edited", self._on_tree_view_cell_edited)
+        renderer = Gtk.CellRendererText()
+        renderer.props.xpad = 4
+        renderer.props.ypad = 4
+        renderer.props.yalign = 0
+        column = Gtk.TreeViewColumn(_("Length Diff"), renderer, markup=5)
+        column.set_resizable(True)
+        self._tree_view.append_column(column)
 
     def _init_values(self):
         """Initialize default values for widgets."""
@@ -960,8 +970,14 @@ class ConfirmationPage(BuilderPage):
         """Populate the tree view of changes to texts."""
         self._tree_view.get_model().clear()
         store = self._tree_view.get_model()
+        from aeidon.liner import format_line_break_diff
         for page, index, orig, new in changes:
-            store.append((page, index, True, orig, new))
+            diff = format_line_break_diff(
+                orig, new,
+                length_func=self._line_break_length_func,
+                max_length=self._line_break_max_length,
+                max_lines=self._line_break_max_lines)
+            store.append((page, index, True, orig, new, diff))
         self._tree_view.get_selection().unselect_all()
 
 
@@ -1130,6 +1146,11 @@ class TextAssistant(Gtk.Assistant):
         self.set_page_title(self._confirmation_page, title)
         self._confirmation_page.application = self.application
         self._confirmation_page.doc = doc
+        conf = gaupol.conf.line_break
+        self._confirmation_page._line_break_max_length = conf.max_length
+        self._confirmation_page._line_break_max_lines = conf.max_lines
+        self._confirmation_page._line_break_length_func = (
+            gaupol.ruler.get_length_function(conf.length_unit))
         self._confirmation_page.populate_tree_view(changes)
         self.set_page_complete(self._progress_page, True)
 
