@@ -144,3 +144,104 @@ class TestPositionAgent(aeidon.TestCase):
         for subtitle in self.project.subtitles[3:6]:
             assert a < subtitle.start_time < b
         assert self.project.subtitles[6].start_time == b
+
+    def test_preview_shift_positions__time_positive(self):
+        subtitles = self.project.subtitles
+        subtitles[0].start = "00:00:01.000"
+        subtitles[0].end   = "00:00:02.000"
+        subtitles[-1].start = "00:01:00.000"
+        subtitles[-1].end   = "00:01:05.000"
+        indices = self.project.get_all_indices()
+        preview = self.project.preview_shift_positions(
+            indices, aeidon.as_seconds(3.5))
+        assert preview is not None
+        assert preview["first"]["index"] == indices[0]
+        assert preview["first"]["start"] == "00:00:01.000"
+        assert preview["first"]["new_start"] == "00:00:04.500"
+        assert preview["first"]["end"] == "00:00:02.000"
+        assert preview["first"]["new_end"] == "00:00:05.500"
+        assert preview["last"]["index"] == indices[-1]
+        assert preview["last"]["start"] == "00:01:00.000"
+        assert preview["last"]["new_start"] == "00:01:03.500"
+        assert preview["last"]["end"] == "00:01:05.000"
+        assert preview["last"]["new_end"] == "00:01:08.500"
+
+    def test_preview_shift_positions__time_negative(self):
+        subtitles = self.project.subtitles
+        subtitles[0].start = "00:00:10.000"
+        subtitles[0].end   = "00:00:12.000"
+        subtitles[-1].start = "00:01:00.000"
+        subtitles[-1].end   = "00:01:05.000"
+        indices = self.project.get_all_indices()
+        preview = self.project.preview_shift_positions(
+            indices, aeidon.as_seconds(-5.0))
+        assert preview["first"]["new_start"] == "00:00:05.000"
+        assert preview["first"]["new_end"] == "00:00:07.000"
+        assert preview["last"]["new_start"] == "00:00:55.000"
+        assert preview["last"]["new_end"] == "00:01:00.000"
+
+    def test_preview_shift_positions__frame(self):
+        self.project.open_main(self.new_microdvd_file(), "ascii")
+        subtitles = self.project.subtitles
+        subtitles[0].start = 100
+        subtitles[0].end   = 200
+        subtitles[-1].start = 1000
+        subtitles[-1].end   = 1200
+        indices = self.project.get_all_indices()
+        orig_first_start = subtitles[0].start_time
+        orig_last_start = subtitles[-1].start_time
+        preview = self.project.preview_shift_positions(
+            indices, aeidon.as_frame(50))
+        # Preview always returns time strings.
+        assert preview["first"]["start"] == orig_first_start
+        assert preview["first"]["new_start"] != orig_first_start
+        assert preview["last"]["start"] == orig_last_start
+        assert preview["last"]["new_start"] != orig_last_start
+        # Positive shift => new times should be later.
+        calc = self.project.calc
+        assert calc.is_later(preview["first"]["new_start"],
+                             preview["first"]["start"])
+        assert calc.is_later(preview["last"]["new_start"],
+                             preview["last"]["start"])
+
+    def test_preview_shift_positions__partial_indices(self):
+        subtitles = self.project.subtitles
+        subtitles[2].start = "00:00:10.000"
+        subtitles[2].end   = "00:00:12.000"
+        subtitles[5].start = "00:00:30.000"
+        subtitles[5].end   = "00:00:35.000"
+        indices = [2, 3, 4, 5]
+        preview = self.project.preview_shift_positions(
+            indices, aeidon.as_seconds(2.0))
+        assert preview["first"]["index"] == 2
+        assert preview["first"]["new_start"] == "00:00:12.000"
+        assert preview["last"]["index"] == 5
+        assert preview["last"]["new_start"] == "00:00:32.000"
+
+    def test_preview_shift_positions__single_subtitle(self):
+        subtitles = self.project.subtitles
+        subtitles[3].start = "00:00:20.000"
+        subtitles[3].end   = "00:00:25.000"
+        indices = [3]
+        preview = self.project.preview_shift_positions(
+            indices, aeidon.as_seconds(1.0))
+        assert preview["first"]["index"] == preview["last"]["index"] == 3
+        assert preview["first"]["new_start"] == "00:00:21.000"
+        assert preview["last"]["new_start"] == "00:00:21.000"
+
+    def test_preview_shift_positions__does_not_modify(self):
+        subtitles = self.project.subtitles
+        subtitles[0].start = "00:00:01.000"
+        subtitles[0].end   = "00:00:02.000"
+        orig_start = subtitles[0].start
+        orig_end = subtitles[0].end
+        indices = self.project.get_all_indices()
+        self.project.preview_shift_positions(
+            indices, aeidon.as_seconds(10.0))
+        assert subtitles[0].start == orig_start
+        assert subtitles[0].end == orig_end
+
+    def test_preview_shift_positions__empty_indices(self):
+        preview = self.project.preview_shift_positions(
+            [], aeidon.as_seconds(1.0))
+        assert preview is None

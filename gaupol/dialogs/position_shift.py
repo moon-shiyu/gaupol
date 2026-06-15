@@ -35,6 +35,9 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         "amount_spin",
         "current_radio",
         "preview_button",
+        "preview_box",
+        "preview_first_label",
+        "preview_last_label",
         "selected_radio",
         "to_end_radio",
         "unit_label",
@@ -92,6 +95,10 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         if (page.project.video_path is None or
             page.project.main_file is None):
             self._preview_button.set_sensitive(False)
+        # Update time preview when target scope changes.
+        for radio in (self._selected_radio, self._to_end_radio,
+                      self._current_radio, self._all_radio):
+            radio.connect("toggled", lambda *a: self._update_time_preview())
         self._amount_spin.emit("value-changed")
 
     def _init_widgets(self):
@@ -99,9 +106,10 @@ class PositionShiftDialog(gaupol.BuilderDialog):
         raise NotImplementedError
 
     def _on_amount_spin_value_changed(self, spin_button):
-        """Set response sensitivity."""
+        """Set response sensitivity and update preview."""
         has_value = (spin_button.get_value() != 0.0)
         self.set_response_sensitive(Gtk.ResponseType.OK, has_value)
+        self._update_time_preview()
 
     def _on_preview_button_clicked(self, *args):
         """Preview shift changes with a video player."""
@@ -130,6 +138,44 @@ class PositionShiftDialog(gaupol.BuilderDialog):
             rows = self.application.get_target_rows(target)
             page.project.shift_positions(rows, amount)
         gaupol.util.set_cursor_normal(self)
+
+    def _update_time_preview(self):
+        """Update inline preview labels with first/last subtitle times."""
+        page = self.application.get_current_page()
+        project = page.project
+        if not project.subtitles:
+            self._preview_first_label.set_text("")
+            self._preview_last_label.set_text("")
+            return
+        target = self._get_target()
+        rows = self.application.get_target_rows(target)
+        amount = self._get_amount()
+        preview = project.preview_shift_positions(rows, amount)
+        if preview is None:
+            self._preview_first_label.set_text(_("No subtitles to shift"))
+            self._preview_last_label.set_text("")
+            return
+        first = preview["first"]
+        last = preview["last"]
+        if first["index"] == last["index"]:
+            # Only one subtitle affected -- show it on the first line.
+            self._preview_first_label.set_markup(
+                "<b>#{}:</b>  {} → {}  /  {} → {}".format(
+                    first["index"] + 1,
+                    first["start"], first["new_start"],
+                    first["end"], first["new_end"]))
+            self._preview_last_label.set_text("")
+        else:
+            self._preview_first_label.set_markup(
+                "<b>{}:</b>  #{}: {} → {}  /  {} → {}".format(
+                    _("First"), first["index"] + 1,
+                    first["start"], first["new_start"],
+                    first["end"], first["new_end"]))
+            self._preview_last_label.set_markup(
+                "<b>{}:</b>  #{}: {} → {}  /  {} → {}".format(
+                    _("Last"), last["index"] + 1,
+                    last["start"], last["new_start"],
+                    last["end"], last["new_end"]))
 
 
 class FrameShiftDialog(PositionShiftDialog):
