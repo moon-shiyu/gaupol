@@ -383,8 +383,15 @@ class LocalePage(BuilderPage):
         codes = self._manager.get_languages(script)
         names = list(map(aeidon.languages.code_to_name, codes))
         items = [(codes[i], names[i]) for i in range(len(codes))]
-        items.sort(key=lambda x: x[1])
-        self._populate_combo(self._language_combo, items, self.conf.language)
+        system_code = aeidon.locales.get_system_code()
+        system_lang = system_code[:2] if system_code else None
+        priority, remaining = aeidon.locales.prioritize_languages(
+            items, system_lang, self.conf.language)
+        combined = list(priority)
+        if priority and remaining:
+            combined.append((gaupol.COMBO_SEPARATOR, ""))
+        combined.extend(remaining)
+        self._populate_combo(self._language_combo, combined, self.conf.language)
 
     def _populate_script_combo(self):
         """Populate the script combo box."""

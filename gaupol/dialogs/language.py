@@ -67,11 +67,11 @@ class LanguageDialog(gaupol.BuilderDialog):
         selection.connect("changed", self._on_tree_view_selection_changed)
         store = Gtk.ListStore(str, str)
         self._populate_store(store)
-        store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+        self._tree_view.set_row_separator_func(
+            gaupol.util.separate_combo, None)
         self._tree_view.set_model(store)
         renderer = Gtk.CellRendererText()
         column = Gtk.TreeViewColumn("", renderer, text=1)
-        column.set_sort_column_id(1)
         self._tree_view.append_column(column)
 
     def _init_values(self):
@@ -111,18 +111,36 @@ class LanguageDialog(gaupol.BuilderDialog):
             else gaupol.fields.TRAN_TEXT)
 
     def _on_tree_view_selection_changed(self, selection):
-        """Save the selected language."""
+        """Save the selected language and update recently used list."""
         store, itr = selection.get_selected()
         if itr is None: return
         value = store.get_value(itr, 0)
+        if value == gaupol.COMBO_SEPARATOR: return
         gaupol.conf.spell_check.language = value
+        recent = list(gaupol.conf.spell_check.recently_used_languages)
+        if value in recent:
+            recent.remove(value)
+        recent.insert(0, value)
+        gaupol.conf.spell_check.recently_used_languages = recent[:5]
 
     def _populate_store(self, store):
-        """Add all available languages to `store`."""
+        """Add all available languages to `store`, priority languages first."""
         locales = []
         with aeidon.util.silent(Exception):
             locales = aeidon.SpellChecker.list_languages()
+        items = []
         for locale in locales:
             with aeidon.util.silent(Exception):
                 name = aeidon.locales.code_to_name(locale)
-                store.append((locale, name))
+                items.append((locale, name))
+        system_code = aeidon.locales.get_system_code()
+        current_code = gaupol.conf.spell_check.language
+        recent_codes = list(gaupol.conf.spell_check.recently_used_languages)
+        priority, remaining = aeidon.locales.prioritize_languages(
+            items, system_code, current_code, recent_codes)
+        for code, name in priority:
+            store.append((code, name))
+        if priority and remaining:
+            store.append((gaupol.COMBO_SEPARATOR, ""))
+        for code, name in remaining:
+            store.append((code, name))

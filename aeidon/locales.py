@@ -53,6 +53,45 @@ def get_system_code():
     import locale
     return locale.getlocale()[0]
 
+def prioritize_languages(items, system_code=None, current_code=None, recent_codes=None):
+    """
+    Reorder language items with priority languages first.
+
+    `items` should be a list of ``(code, name)`` tuples. Returns
+    ``(priority_items, remaining_items)`` where priority items appear in order:
+    system language, current language, then recently used languages. Remaining
+    items are sorted alphabetically by name. Duplicates across priority
+    categories are removed (highest priority wins).
+    """
+    if recent_codes is None:
+        recent_codes = []
+    # Build ordered list of priority codes (highest priority first).
+    priority_codes = []
+    for code in [system_code, current_code] + list(recent_codes):
+        if code and code not in priority_codes:
+            priority_codes.append(code)
+    # Build a lookup from item code to (code, name).
+    code_map = {code: (code, name) for code, name in items}
+    # Match each priority code: try exact match, then 2-letter prefix match.
+    priority_items = []
+    seen = set()
+    for pcode in priority_codes:
+        if pcode in code_map and pcode not in seen:
+            priority_items.append(code_map[pcode])
+            seen.add(pcode)
+        elif len(pcode) >= 2:
+            prefix = pcode[:2]
+            for icode, name in items:
+                if icode[:2] == prefix and icode not in seen:
+                    priority_items.append((icode, name))
+                    seen.add(icode)
+                    break
+    # Remaining items sorted alphabetically by name.
+    remaining_items = sorted(
+        [(c, n) for c, n in items if c not in seen],
+        key=lambda x: x[1])
+    return priority_items, remaining_items
+
 @aeidon.deco.once
 def get_system_modifier():
     """Return the system default script modifier or ``None``."""
